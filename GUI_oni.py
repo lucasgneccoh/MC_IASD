@@ -176,6 +176,6 @@ def main_bot_vs_bot():
 
 
 if __name__ == "__main__":
-    nb_coups = 1000
+    nb_coups = 100
     main_bot_vs_bot()
     
