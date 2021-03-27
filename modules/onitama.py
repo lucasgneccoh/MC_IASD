@@ -244,6 +244,10 @@ def UCB (board, n):
             bestMove = moves [m]
     return bestMove
 
+"""
+Hashtables
+"""
+
 hashTable = []
 for k in range (5): ##5 possble par cases, empty, rouge roi ou pion, bleu roi ou pion
     l = []
@@ -263,6 +267,10 @@ for k in range (3): ##3 emplacements de cartes possible, bleu, rouge ou milieu
     for i in range (5): ## 5 cartes
         l.append (random.randint (0, 2 ** 64))
     hashCards.append(l)
+
+"""
+main
+"""
 
 if __name__ == "__main__":
     obj = Board()
