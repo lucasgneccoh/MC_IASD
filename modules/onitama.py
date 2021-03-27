@@ -253,13 +253,16 @@ for k in range (5): ##5 possble par cases, empty, rouge roi ou pion, bleu roi ou
             l1.append (random.randint (0, 2 ** 64))
         l.append (l1)
     hashTable.append (l)
+    
 hashTurn = random.randint (0, 2 ** 64) ##le tour
+
+hashCards = []
 
 for k in range (3): ##3 emplacements de cartes possible, bleu, rouge ou milieu
     l = []
     for i in range (5): ## 5 cartes
         l.append (random.randint (0, 2 ** 64))
-    hashTable.append (l)
+    hashCards.append(l)
 
 if __name__ == "__main__":
     obj = Board()
