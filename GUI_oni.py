@@ -17,16 +17,16 @@ SQ_SIZE = HEIGHT // DIMENSION
 
 MAX_FPS = 15
 
-IMAGES_background = p.transform.scale(p.image.load("Project/images/board_good_size_redone.png"), (WIDTH, HEIGHT))
+IMAGES_background = p.transform.scale(p.image.load("images/board_good_size_redone.png"), (WIDTH, HEIGHT))
 
 # IMAGES_w = p.transform.scale(p.image.load("GUI/images/wp.png"), (SQ_SIZE, SQ_SIZE))
 # IMAGES_wK = p.transform.scale(p.image.load("GUI/images/wK.png"), (SQ_SIZE, SQ_SIZE))
 # IMAGES_b = p.transform.scale(p.image.load("GUI/images/bp.png"), (SQ_SIZE, SQ_SIZE))
 
-IMAGES_w = p.transform.scale(p.image.load("Project/images/red_pawn_decoupe.png"), (49, 81))
-IMAGES_wK = p.transform.scale(p.image.load("Project/images/red_king_decoupe.png"), (43 + 10, 90 + 10))
-IMAGES_b = p.transform.scale(p.image.load("Project/images/blue_pawn_decoupe.png"), (50, 80))
-IMAGES_bK = p.transform.scale(p.image.load("Project/images/blue_king_decoupe.png"), (42 + 15, 90 + 10))
+IMAGES_w = p.transform.scale(p.image.load("images/red_pawn_decoupe.png"), (49, 81))
+IMAGES_wK = p.transform.scale(p.image.load("images/red_king_decoupe.png"), (43 + 10, 90 + 10))
+IMAGES_b = p.transform.scale(p.image.load("images/blue_pawn_decoupe.png"), (50, 80))
+IMAGES_bK = p.transform.scale(p.image.load("images/blue_king_decoupe.png"), (42 + 15, 90 + 10))
 
 
 

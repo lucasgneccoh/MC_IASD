@@ -10,4 +10,3 @@ We implement the game Onitama and test different algorithms to play the game
 - Try UCT, RAVE, GRAVE, SequentialHalving, SHUSS
 - Adapt and run the tournament.py
 - Finish the GUI by adding the visual of the cards, maybe an animation of the moves
-
