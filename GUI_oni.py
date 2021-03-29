@@ -55,6 +55,7 @@ def main():
         if gs.turn == White:
             for e in p.event.get():
                 if e.type == p.QUIT:
+                    p.close()
                     running = False
                 elif e.type == p.MOUSEBUTTONDOWN:
                     location = p.mouse.get_pos() ##(x,y) location of mouse
@@ -172,10 +173,57 @@ def main_bot_vs_bot():
                 print(gs.board)
         # time.sleep(2)
         
-        
+def main_console(player = BtEngine.UCB, nb_steps = 100):
+    gs = BtEngine.Board()
+    while not gs.terminal():
+        if gs.turn == White:
+            # Show cards
+            print("Your cards")
+            for i in gs.w_cards:
+                c_name = gs.chosen_cards[i]
+                c = BtEngine.cards[c_name]
+                print("{}: {} -> {}".format(i, c_name, c))
+            print("Middle card")    
+            c_name = gs.chosen_cards[gs.m_card]
+            c = BtEngine.cards[c_name]
+            print("{}: {} -> {}".format(gs.m_card, c_name, c))
+            print("Opponent cards")
+            for i in gs.b_cards:
+                c_name = gs.chosen_cards[i]
+                c = BtEngine.cards[c_name]
+                print("{}: {} -> {}".format(i, c_name, c))
+            print("Board")
+            print(gs.board)
+            
+            
+            sel_c= input("Select a card: ")
+            
+            if sel_c == 'q' or not int(sel_c) in gs.w_cards:
+                break
+                    
+            sel_p= input("Enter piece to move (x,y): ")
+            coords = list(map(int, sel_p.strip().split(',')))
+                            
+            sel_m = input("Select move from card (using index): ")
+            c_name = gs.chosen_cards[int(sel_c)]
+            c = BtEngine.cards[c_name]
+            m = c[int(sel_m)]
+            new_coords = [coords[0] + m[0], coords[1] + m[1]]
+            move = BtEngine.Move(White, coords[0], coords[1], new_coords[0], new_coords[1], int(sel_c))
+            gs.play(move)
+            
+        else:
+            move = BtEngine.UCB(gs, nb_coups)
+            print("Bot plays: ", move)
+            gs.play(move)
+            
+    return gs.score()
+    
+         
 
 
 if __name__ == "__main__":
     nb_coups = 100
-    main_bot_vs_bot()
+    # main_bot_vs_bot()
+    main_console()
     

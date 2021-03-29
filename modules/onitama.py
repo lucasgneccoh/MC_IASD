@@ -15,6 +15,7 @@ White = 1
 Black = -1
 WhiteK = 9
 BlackK = -9
+ref_values = [Empty, White, Black, WhiteK, BlackK]
 
 Dx = 5
 Dy = 5
@@ -47,21 +48,35 @@ Board class
 class Board(object):
 
     def __init__(self):
+        self.h = 0
+        self.hashTable, self.hashTurn, self.hashCards = create_hash_tables()
         self.turn = White
+        self.h = self.h ^ self.hashTurn
         self.board = np.zeros((Dx, Dy))
 
         for j in range (0, Dy):
             self.board[4][j] = White
+            if j != 2: self.h = self.h ^ self.hashTable[White][4][j]
         self.board[4][2] = WhiteK
+        self.h = self.h ^self. hashTable[WhiteK][4][2]
 
         for j in range (0, Dy):
             self.board[0][j] = Black
+            if j != 2: self.h = self.h ^ self.hashTable[Black][0][j]
         self.board[0][2] = BlackK
+        self.h = self.h ^ self.hashTable[BlackK][0][2]
 
         self.chosen_cards = np.random.choice(list(cards.keys()), size = 5, replace= False)
         self.w_cards = [0,1]
+        self.h = self.h ^ self.hashCards[White][0]
+        self.h = self.h ^ self.hashCards[White][1]
         self.b_cards = [3,4]
+        self.h = self.h ^ self.hashCards[Black][3]
+        self.h = self.h ^ self.hashCards[Black][4]
         self.m_card = 2
+        self.h = self.h ^ self.hashCards[Empty][2]
+        
+        
 
     def legalMoves(self):
         moves = []
@@ -116,17 +131,38 @@ class Board(object):
         return True
 
     def play(self, move):
-        self.board[move.x2, move.y2] = deepcopy(self.board[move.x1, move.y1])
-        self.board[move.x1, move.y1] = Empty
+        pass_turn = False
+        if not move.valid(self):
+            print("Trying to play invalid move. Passing")
+            pass_turn = True
+            
+        if not pass_turn:
+            in_spot = deepcopy(self.board[move.x2, move.y2])
+            moving_out = self.board[move.x1, move.y1]
+            if in_spot != Empty:
+                self.h = self.h ^ self.hashTable[in_spot][move.x2][move.y2]
+                
+            self.h = self.h ^ self.hashTable[moving_out][move.x1][move.y1]
+            self.h = self.h ^ self.hashTable[moving_out][move.x2][move.y2]
+            self.board[move.x2, move.y2] = deepcopy(self.board[move.x1, move.y1])
+            self.board[move.x1, move.y1] = Empty
+        
+        # Even if pass, cards still change, and also turn
         if move.color == White:
-            self.w_cards.remove(move.card)
+            self.w_cards.remove(move.card)            
             self.w_cards += [deepcopy(self.m_card)]
             self.turn = Black
         else:
             self.b_cards.remove(move.card)
             self.b_cards += [deepcopy(self.m_card)]
             self.turn = White
+        self.h = self.h ^ self.hashCards[move.color][move.card]
+        self.h = self.h ^ self.hashCards[move.color][self.m_card]
+        self.h = self.h ^ self.hashCards[Empty][move.card]
+        self.h = self.h ^ self.hashCards[Empty][self.m_card]
+        self.h = self.h ^ self.hashTurn
         self.m_card = move.card
+        return
         
         # print(self.board)
         # print(self.w_cards, self.m_card, self.b_cards)
@@ -163,6 +199,7 @@ class Move(object):
     def __eq__(self, other):
         """
         Implémente l'égalité entre deux instances de la classe Move
+        ?? Add the card to the move comparison?
         """
         if isinstance(other, Move):
             if self.color == other.color and self.x1 == other.x1 and self.x2 == other.x2 and self.y1 == other.y1 and self.y2 == other.y2:
@@ -177,7 +214,33 @@ class Move(object):
             # self.board[i][j] * self.turn > 0
             return False
         return True
-
+    
+    def move_index_in_card(self, board):
+        look_for = (self.x1 - self.x2, self.x1 - self.x2)
+        for k, move in enumerate(cards[board.chosen_cards[self.card]]):
+            if look_for[0]==move[0] and look_for[1]==move[1]:
+                return k
+        return None
+    
+    def code(self, board):
+        """
+        Encode the moves: Depends on initial position, card used (0-4), movement used from the card (0,1,2,3,...m as cards have different possible moves), if it captures a pion or the sensei
+        Maybe also if it is made by a pion or the sensei?
+        """
+        init_pos = Dy * self.x1 + self.y1 # 25 options
+        card = self.card # 5 options
+        move_index = self.move_index_in_card(board) # 4 options
+        captures = 0 if board.board[self.x2,self.y2] == Empty else 1 # 2 options
+        is_sensei = 1 if abs(board.board[self.x1,self.y1])>1 else 0 # 2 options
+        color = 0 if self.color == White else 1
+        # 25-position, 5-card, 4-move_per_card, 2-is_capture, 2-is_sensei
+        # Total of 2000 options for each color
+        # Order is
+        # color -> is_sensei -> captures -> move_index -> card -> position
+        return 2000*color + 1000*is_sensei + 500*captures + 125*move_index + 25*card + init_pos
+        
+    def __repr__(self):
+        print("Card {}: ({},{}) -> ({},{})".format(self.card, self.x1, self.y1, self.x2, self.y2))
 
 # test = Board()
 # print(test.board)
@@ -247,26 +310,28 @@ def UCB (board, n):
 """
 Hashtables
 """
-
-hashTable = []
-for k in range (5): ##5 possble par cases, empty, rouge roi ou pion, bleu roi ou pion
-    l = []
-    for i in range (Dx):
-        l1 = []
-        for j in range (Dy):
-            l1.append (random.randint (0, 2 ** 64))
-        l.append (l1)
-    hashTable.append (l)
+def create_hash_tables():
+    hashTable = dict()
+    # ?? Empty has to be considered?
+    for k in ref_values: ##5 possble par cases, empty, rouge roi ou pion, bleu roi ou pion
+        l = []
+        for i in range (Dx):
+            l1 = []
+            for j in range (Dy):
+                l1.append (random.randint (0, 2 ** 64))
+            l.append (l1)
+        hashTable[k] = deepcopy(l)
+        
+    hashTurn = random.randint (0, 2 ** 64) ##le tour
     
-hashTurn = random.randint (0, 2 ** 64) ##le tour
-
-hashCards = []
-
-for k in range (3): ##3 emplacements de cartes possible, bleu, rouge ou milieu
-    l = []
-    for i in range (5): ## 5 cartes
-        l.append (random.randint (0, 2 ** 64))
-    hashCards.append(l)
+    hashCards = dict()
+    values= [Empty, White, Black]
+    for k in values: ##3 emplacements de cartes possible, bleu, rouge ou milieu
+        l = []
+        for i in range (5): ## 5 cartes
+            l.append (random.randint (0, 2 ** 64))
+        hashCards[k] = deepcopy(l)
+    return hashTable, hashTurn, hashCards
 
 """
 main
@@ -275,4 +340,4 @@ main
 if __name__ == "__main__":
     obj = Board()
     print(obj.board)
-    obj.playout()
+    obj.playout()    

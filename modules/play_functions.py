@@ -15,10 +15,22 @@ Dx = 5
 Dy = 5
 Empty = 0
 White = 1
-Black = 2
+Black = -1
+WhiteK = 9
+BlackK = -9
 
-MaxLegalMoves = 2*(3*(Dx - 2) + 4)
-MaxTotalLegalMoves = 2 * Dx * Dy * 5
+ONITAMA_MAX_MOVES_CARD = 4
+ONITAMA_CARDS_IN_GAME = 5
+ONITAMA_DIFFER_CAPTURE = 1 # 2 if capture/no capture makes the same move different
+'''
+Just number of actions, independent from board state (like len(moves)):
+    num_actions = # cards * # moves in card (5 * 4)
+    ¿? Include "is_capture" here??
+All possible actions considering state, is capture, etc:
+    num_all_actions = num_actions * (Dx*Dy) * is_capture * is_sensei (2000)
+'''
+MaxLegalMoves = ONITAMA_MAX_MOVES_CARD * ONITAMA_CARDS_IN_GAME
+MaxTotalLegalMoves = MaxLegalMoves * 2 * 2 * Dx*Dy
 Table = {}
 
 """
@@ -359,7 +371,6 @@ def BestMoveUCT(board, n):
 """
 Flat Monte Carlo
 """
-
 
 def flat (board, n):
     moves = board.legalMoves ()
