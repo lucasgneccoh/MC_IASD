@@ -20,6 +20,23 @@ ref_values = [Empty, White, Black, WhiteK, BlackK]
 Dx = 5
 Dy = 5
 
+
+ONITAMA_MAX_MOVES_CARD = 4
+ONITAMA_CARDS_IN_GAME = 5
+
+'''
+Just number of actions, independent from board state (like len(legal_moves)):
+    num_actions = # cards * # moves in card * # of pieces(5 * 4 * 5)    
+'''
+MaxLegalMoves = ONITAMA_CARDS_IN_GAME * ONITAMA_MAX_MOVES_CARD * 5
+
+'''
+All possible actions considering state, is capture, etc:
+    num_all_actions = #player * (Dx*Dy) * # cards * # moves in card * is_capture * is_sensei (4000)
+'''
+MaxTotalLegalMoves = 2 * Dx * Dy * ONITAMA_CARDS_IN_GAME * ONITAMA_MAX_MOVES_CARD * 2 * 2
+
+
 """
 List of all cards
 """

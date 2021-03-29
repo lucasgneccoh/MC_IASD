@@ -5,11 +5,29 @@ Partie graphique réalisée avec Pygame
 ##Importations
 
 import pygame as p
-from modules import onitama as BtEngine
+import sys
+from modules import onitama as ONI
+from modules import play_functions
+from modules import transposition_table
 import time
 # import copy
 
 ##Constantes
+'''
+Game and player constants. They communicate some things through the transposition table
+'''
+
+White = ONI.White
+Black = ONI.Black
+transposition_table.T_Table.MaxLegalMoves = ONI.ONITAMA_CARDS_IN_GAME * ONI.ONITAMA_MAX_MOVES_CARD * 5
+
+transposition_table.T_Table.MaxTotalLegalMoves = 2 * ONI.Dx * ONI.Dy * ONI.ONITAMA_CARDS_IN_GAME * ONI.ONITAMA_MAX_MOVES_CARD * 2 * 2
+
+
+'''
+GUI related definitions
+'''
+
 
 WIDTH = HEIGHT = 500
 DIMENSION = 5
@@ -30,9 +48,6 @@ IMAGES_bK = p.transform.scale(p.image.load("images/blue_king_decoupe.png"), (42 
 
 
 
-White = 1
-Black = -1
-
 """
 Main pour joueur à la main contre un programme
 """
@@ -42,60 +57,75 @@ def main():
     screen = p.display.set_mode((WIDTH, HEIGHT))
     clock = p.time.Clock()
     screen.fill(p.Color("white"))
-    gs = BtEngine.Board()
+    gs = ONI.Board()
     validMoves = gs.legalMoves()
     moveMade = False
     # loadImages()
     running = True
     sqSelected = ()
     playerClicks = []
-    
-    while running:
-        # print("pass")
-        if gs.turn == White:
-            for e in p.event.get():
-                if e.type == p.QUIT:
-                    p.close()
-                    running = False
-                elif e.type == p.MOUSEBUTTONDOWN:
-                    location = p.mouse.get_pos() ##(x,y) location of mouse
-                    col = location[0]//SQ_SIZE
-                    row = location[1]//SQ_SIZE
-                    if sqSelected == (row, col): ##Reset Clicks
-                        sqSelected = ()
-                        playerClicks = []
-                    else:
-                        sqSelected = (row, col)
-                        playerClicks += [sqSelected]
-                    if len(playerClicks) == 2:
-                        move = BtEngine.Move(gs.turn,playerClicks[0][0], playerClicks[0][1],
-                        playerClicks[1][0], playerClicks[1][1])
-                        # print(move.getChessNotation())
-                        for i in range(len(validMoves)):
-                            if move == validMoves[i]:
-                                gs.play(validMoves[i])
-                                moveMade = True
+    try:
+        print_cards(gs)
+        while running:
+            # print("pass")
+            if gs.turn == White:
+                for e in p.event.get():
+                    if e.type == p.QUIT:                    
+                        running = False
+                        print("Exiting")
+                        p.quit()
+                        sys.exit()
+                    elif e.type == p.MOUSEBUTTONDOWN:
+                        location = p.mouse.get_pos() ##(x,y) location of mouse
+                        col = location[0]//SQ_SIZE
+                        row = location[1]//SQ_SIZE
+                        if sqSelected == (row, col): ##Reset Clicks
+                            sqSelected = ()
+                            playerClicks = []
+                        else:
+                            sqSelected = (row, col)
+                            playerClicks += [sqSelected]
+                        if len(playerClicks) == 2:
+                            sel_c= input("Select a card: ")
+                            print("Chosen card: ", gs.chosen_cards[int(sel_c)])
                             
-                                ##Reset Clicks
-                                sqSelected = ()
-                                playerClicks = []
-                        if not moveMade:
-                            playerClicks = [sqSelected]
-
-                # elif e.type == p.KEYDOWN:
-                #     if e.key == p.K_z: ##undo when 'z' is pressed
-                #         gs.undoMove()
-                #         moveMade = True
-            if moveMade:
+                            move = ONI.Move(gs.turn,playerClicks[0][0], playerClicks[0][1],
+                            playerClicks[1][0], playerClicks[1][1], int(sel_c))
+                            # print(move.getChessNotation())
+                            for i in range(len(validMoves)):
+                                if move == validMoves[i]:
+                                    gs.play(validMoves[i])
+                                    moveMade = True
+                                
+                                    ##Reset Clicks
+                                    sqSelected = ()
+                                    playerClicks = []
+                            if not moveMade:
+                                playerClicks = [sqSelected]
+    
+                    # elif e.type == p.KEYDOWN:
+                    #     if e.key == p.K_z: ##undo when 'z' is pressed
+                    #         gs.undoMove()
+                    #         moveMade = True
+                if moveMade:
+                    validMoves = gs.legalMoves()
+                    moveMade = False
+            else:
+                gs.play (play_functions.UCB(gs, nb_coups))
                 validMoves = gs.legalMoves()
+                print_cards(gs)
                 moveMade = False
-        else:
-            gs.play (BtEngine.UCB(gs, nb_coups))
-            validMoves = gs.legalMoves()
-            moveMade = False
-        drawGameState(screen, gs)
-        clock.tick(MAX_FPS)
-        p.display.flip()
+            drawGameState(screen, gs)
+            clock.tick(MAX_FPS)
+            p.display.flip()
+    except Exception as e:
+        print(e)        
+        running = False
+        print("Exiting")
+        p.quit()
+        sys.exit()
+        
+
 
 def drawGameState(screen, gs):
     # drawBoard(screen)
@@ -126,7 +156,7 @@ def drawPieces(screen, board):
                 screen.blit(IMAGES_bK, p.Rect(c*SQ_SIZE + 30, r*SQ_SIZE, SQ_SIZE, SQ_SIZE))
 
 """
-Main pour faire jouer deux bots l'un contre l'autre
+Main pour faire jouer deux bots l'un contre l'autre en utilisant le GUI
 """
 
 def main_bot_vs_bot():
@@ -134,7 +164,7 @@ def main_bot_vs_bot():
     screen = p.display.set_mode((WIDTH, HEIGHT))
     clock = p.time.Clock()
     screen.fill(p.Color("white"))
-    gs = BtEngine.Board()
+    gs = ONI.Board()
     validMoves = gs.legalMoves()
     moveMade = False
     running = True
@@ -156,7 +186,7 @@ def main_bot_vs_bot():
                 """
                 UCB joue blanc
                 """
-                gs.play(BtEngine.flat(gs, nb_coups))
+                gs.play(play_functions.flat(gs, nb_coups))
                 validMoves = gs.legalMoves()
                 moveMade = False
                 print("flat played")
@@ -166,36 +196,77 @@ def main_bot_vs_bot():
                 RAVE joue noir
                 """
                 # gs.play_random ()
-                gs.play(BtEngine.UCB(gs, nb_coups))
+                gs.play(play_functions.UCB(gs, nb_coups))
                 validMoves = gs.legalMoves()
                 moveMade = False
                 print("UCB played")
                 print(gs.board)
-        # time.sleep(2)
+        else:
+            p.quit()
+            sys.exit()
+        time.sleep(2)
+  
+
+def main_bot_vs_bot_console(bot1 = play_functions.UCB, bot2 = play_functions.flat, time_sleep = 1):
+    
+    gs = ONI.Board()
+    running = True
+    while running:        
+        if gs.terminal():
+            print("END")
+            print(gs.score())
+            break
+        else:
+            if gs.turn == White: ## Pour faire jouer RAVE en Blanc il suffit de changer == White par == Black
+                """
+                UCB joue blanc
+                """
+                move = bot1(gs, nb_coups)
+                gs.play(move)
+                print("bot 1 played")
+                print("Card: {}".format(gs.chosen_cards[move.card]))
+                print(gs.board)
+            elif gs.turn == Black:
+                """
+                Flat joue noir
+                """
+                # gs.play_random ()
+                move = bot2(gs, nb_coups)
+                gs.play(move)                
+                print("bot 2 played")
+                print("Card: {}".format(gs.chosen_cards[move.card]))
+                print(gs.board)
         
-def main_console(player = BtEngine.UCB, nb_steps = 100):
-    gs = BtEngine.Board()
+        time.sleep(2)
+
+
+def print_cards(gs):
+    print("White cards")
+    for i in gs.w_cards:
+        c_name = gs.chosen_cards[i]
+        c = ONI.cards[c_name]
+        print("{}: {} -> {}".format(i, c_name, c))
+    print("Middle card")    
+    c_name = gs.chosen_cards[gs.m_card]
+    c = ONI.cards[c_name]
+    print("{}: {} -> {}".format(gs.m_card, c_name, c))
+    print("Black cards")
+    for i in gs.b_cards:
+        c_name = gs.chosen_cards[i]
+        c = ONI.cards[c_name]
+        print("{}: {} -> {}".format(i, c_name, c))
+    print("Board")
+    print(gs.board)
+    
+"""
+Main pour joueur à la main contre un programme en utilisant la console
+"""
+def main_console(player = play_functions.UCB, nb_steps = 100, **kwargs):
+    gs = ONI.Board()
     while not gs.terminal():
         if gs.turn == White:
             # Show cards
-            print("Your cards")
-            for i in gs.w_cards:
-                c_name = gs.chosen_cards[i]
-                c = BtEngine.cards[c_name]
-                print("{}: {} -> {}".format(i, c_name, c))
-            print("Middle card")    
-            c_name = gs.chosen_cards[gs.m_card]
-            c = BtEngine.cards[c_name]
-            print("{}: {} -> {}".format(gs.m_card, c_name, c))
-            print("Opponent cards")
-            for i in gs.b_cards:
-                c_name = gs.chosen_cards[i]
-                c = BtEngine.cards[c_name]
-                print("{}: {} -> {}".format(i, c_name, c))
-            print("Board")
-            print(gs.board)
-            
-            
+            print_cards(gs)
             sel_c= input("Select a card: ")
             
             if sel_c == 'q' or not int(sel_c) in gs.w_cards:
@@ -206,14 +277,14 @@ def main_console(player = BtEngine.UCB, nb_steps = 100):
                             
             sel_m = input("Select move from card (using index): ")
             c_name = gs.chosen_cards[int(sel_c)]
-            c = BtEngine.cards[c_name]
+            c = ONI.cards[c_name]
             m = c[int(sel_m)]
             new_coords = [coords[0] + m[0], coords[1] + m[1]]
-            move = BtEngine.Move(White, coords[0], coords[1], new_coords[0], new_coords[1], int(sel_c))
+            move = ONI.Move(White, coords[0], coords[1], new_coords[0], new_coords[1], int(sel_c))
             gs.play(move)
             
         else:
-            move = BtEngine.UCB(gs, nb_coups)
+            move = player(gs, nb_coups, kwargs)
             print("Bot plays: ", move)
             gs.play(move)
             
@@ -224,6 +295,11 @@ def main_console(player = BtEngine.UCB, nb_steps = 100):
 
 if __name__ == "__main__":
     nb_coups = 100
-    # main_bot_vs_bot()
-    main_console()
+    
+    # if player function requires a transposition table, it must be passed to the main function as a kwarg Table = t_table
+    # main_console()
+    
+    # main()
+    
+    main_bot_vs_bot_console()
     

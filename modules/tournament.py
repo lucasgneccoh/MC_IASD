@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
-import Bt4Engine as BtEngine
+import play_functions as bot_players
+import onitama as ONI
 from itertools import combinations
 pd.options.mode.chained_assignment = None  # default='warn'
 
@@ -20,7 +21,7 @@ class Bot:
         return self.play_func(board, self.nb_playouts, **self.params)
 
 def bot1_vs_bot2(white_bot, black_bot, verbose = False):
-    board= BtEngine.Board()
+    board= ONI.Board()
     while (True):
         moves = board.legalMoves()
         if board.terminal():
@@ -53,17 +54,17 @@ def bot1_vs_bot2(white_bot, black_bot, verbose = False):
 # print(new.play(4))
 
 # shu1000_c4 = Bot("SHUSS_1000_C4", BtEngine.SHUSS, 1000, c = 4)
-shu1000_c16 = Bot("SHUSS_1000_C16", BtEngine.SHUSS, 1000, c = 16)
-shu1000_c64 = Bot("SHUSS_1000_C64", BtEngine.SHUSS, 1000, c = 64)
-shu1000_c128 = Bot("SHUSS_1000_C128", BtEngine.SHUSS, 1000, c = 128)
-shu1000_c256 = Bot("SHUSS_1000_C256", BtEngine.SHUSS, 1000, c = 256)
+shu1000_c16 = Bot("SHUSS_1000_C16", bot_players.SHUSS, 1000, c = 16)
+shu1000_c64 = Bot("SHUSS_1000_C64", bot_players.SHUSS, 1000, c = 64)
+shu1000_c128 = Bot("SHUSS_1000_C128", bot_players.SHUSS, 1000, c = 128)
+shu1000_c256 = Bot("SHUSS_1000_C256", bot_players.SHUSS, 1000, c = 256)
 
-uct1000 = Bot("UCT_1000", BtEngine.BestMoveUCT, 1000)
-sh1000 = Bot("SH_1000", BtEngine.SequentialHalving, 1000)
-gr1000 = Bot("GRAVE_1000", BtEngine.BestMoveGRAVE, 1000)
-r1000 = Bot("RAVE_1000", BtEngine.BestMoveRAVE, 1000)
-ucb1000 = Bot("UCB_1000", BtEngine.UCB, 1000)
-flat1000 = Bot("FLAT_1000", BtEngine.UCB, 1000)
+uct1000 = Bot("UCT_1000", bot_players.BestMoveUCT, 1000)
+sh1000 = Bot("SH_1000", bot_players.SequentialHalving, 1000)
+gr1000 = Bot("GRAVE_1000", bot_players.BestMoveGRAVE, 1000)
+r1000 = Bot("RAVE_1000", bot_players.BestMoveRAVE, 1000)
+ucb1000 = Bot("UCB_1000", bot_players.UCB, 1000)
+flat1000 = Bot("FLAT_1000", bot_players.UCB, 1000)
 
 # uct100 = Bot("UCT_100", BtEngine.BestMoveUCT, 100)
 # sh100 = Bot("SH_100", BtEngine.SequentialHalving, 100)

@@ -8,89 +8,48 @@ import numpy as np
 import random
 import copy
 import tqdm
-
 ##Constantes
 
-Dx = 5
-Dy = 5
-Empty = 0
-White = 1
-Black = -1
-WhiteK = 9
-BlackK = -9
-
-ONITAMA_MAX_MOVES_CARD = 4
-ONITAMA_CARDS_IN_GAME = 5
-ONITAMA_DIFFER_CAPTURE = 1 # 2 if capture/no capture makes the same move different
 '''
-Just number of actions, independent from board state (like len(moves)):
-    num_actions = # cards * # moves in card (5 * 4)
-    ¿? Include "is_capture" here??
-All possible actions considering state, is capture, etc:
-    num_all_actions = num_actions * (Dx*Dy) * is_capture * is_sensei (2000)
+This should work for any game!
 '''
-MaxLegalMoves = ONITAMA_MAX_MOVES_CARD * ONITAMA_CARDS_IN_GAME
-MaxTotalLegalMoves = MaxLegalMoves * 2 * 2 * Dx*Dy
-Table = {}
+White, Empty, Black = 1, 0, -1
 
 """
 HashTable pour les tables de transposition
 """
 
-hashTable = []
-for k in range (3):
-    l = []
-    for i in range (Dx):
-        l1 = []
-        for j in range (Dy):
-            l1.append (random.randint (0, 2 ** 64))
-        l.append (l1)
-    hashTable.append (l)
-hashTurn = random.randint (0, 2 ** 64)
+# hashTable = []
+# for k in range (3):
+#     l = []
+#     for i in range (Dx):
+#         l1 = []
+#         for j in range (Dy):
+#             l1.append (random.randint (0, 2 ** 64))
+#         l.append (l1)
+#     hashTable.append (l)
+# hashTurn = random.randint (0, 2 ** 64)
 
 """
 Fonctions utiles hors classes pour les algorithmes
 """
 
-def look(Table, board):
-    return Table.get(board.h, None)
-
-def add(Table, board):
-    nbplayouts = [0.0 for x in range(MaxLegalMoves)]
-    nwins = [0.0 for x in range(MaxLegalMoves)]
-    Table[board.h] = [0, nbplayouts, nwins]
 
 
-def addAMAF(Table, board):
-    nbplayouts = [0.0 for x in range(MaxLegalMoves)]
-    nwins = [0.0 for x in range(MaxLegalMoves)]
-    nbplayoutsAMAF = [0.0 for x in range(MaxTotalLegalMoves)]
-    nwinsAMAF = [0.0 for x in range(MaxTotalLegalMoves)]
-    Table[board.h] = [1, nbplayouts, nwins, nbplayoutsAMAF, nwinsAMAF]
+
 
 """
 Shuss
 """
 
-def updateAMAF(t, played, res):
-    for i in range(len(played)):
-        code = played[i]
-        seen = False
-        for j in range(i):
-            if played[j] == code:
-                seen = True
-        if not seen:
-            t[3][code] += 1
-            t[4][code] += res
-
-def SHUSS(board, budget, c = 128):
-    Table = {}
-    addAMAF(Table, board)
-    t = look(Table, board)
+def SHUSS(Table, board, budget, c = 128):
+    
+    Table.addAMAF(Table, board)
+    t = Table.look(Table, board)
     moves = board.legalMoves()
     total = len(moves)
-    nbplayouts = [0.0 for x in range(MaxTotalLegalMoves)]
-    nbwins = [0.0 for x in range(MaxTotalLegalMoves)]
+    nbplayouts = [0.0 for x in range(Table.MaxTotalLegalMoves)]
+    nbwins = [0.0 for x in range(Table.MaxTotalLegalMoves)]
     while len(moves) > 1:
         for m in moves:
             for i in range(int(budget / (len(moves) * np.log2(total)))):
@@ -98,18 +57,18 @@ def SHUSS(board, budget, c = 128):
                 b.play(m)
                 played = [m.code(board)]
                 res = GRAVE(Table, b, played, t)
-                updateAMAF(t, played, res)
+                Table.updateAMAF(t, played, res)
                 nbplayouts[m.code(board)] += 1
                 if board.turn == White:
                     nbwins[m.code(board)] += res
                 else:
                     nbwins[m.code(board)] += 1.0 - res
-        moves = bestHalfSHUSS(t, board, moves, nbwins, nbplayouts, c)
+        moves = bestHalfSHUSS(t, board, moves, nbwins, nbplayouts, c, Table.MaxTotalLegalMoves)
     return moves[0]
 
-def bestHalfSHUSS(t, board, moves, nbwins, nbplayouts, c = 128):
+def bestHalfSHUSS(t, board, moves, nbwins, nbplayouts, c = 128, MaxTotalLegalMoves=None):
     half = []
-    notused = [True for x in range(MaxTotalLegalMoves)]
+    notused = [True for x in range(MaxTotalLegalMoves)] 
     # c = 128 ##initialement 128
     for i in range(len(moves) //2):
         best = -1.0
@@ -132,13 +91,12 @@ def bestHalfSHUSS(t, board, moves, nbwins, nbplayouts, c = 128):
 SequentialHalving
 """
 
-def SequentialHalving(board, budget):
-    Table = {}
+def SequentialHalving(Table, board, budget): 
     
     moves = board.legalMoves()
     total = len(moves)
-    nbplayouts = [0.0 for x in range(MaxTotalLegalMoves)]
-    nbwins = [0.0 for x in range(MaxTotalLegalMoves)]
+    nbplayouts = [0.0 for x in range(Table.MaxTotalLegalMoves)]
+    nbwins = [0.0 for x in range(Table.MaxTotalLegalMoves)]
     while len(moves) > 1:
         for m in moves:
             for i in range(int(budget / (len(moves)*np.log2(total)))):
@@ -150,10 +108,10 @@ def SequentialHalving(board, budget):
                     nbwins[m.code(board)] += res
                 else:
                     nbwins[m.code(board)] += 1.0 - res
-        moves = bestHalf(board, moves, nbwins, nbplayouts)
+        moves = bestHalf(board, moves, nbwins, nbplayouts, Table.MaxTotalLegalMoves)
     return moves[0]
 
-def bestHalf(board, moves, nbwins, nbplayouts):
+def bestHalf(board, moves, nbwins, nbplayouts, MaxTotalLegalMoves):
     half = []
     notused = [True for x in range(MaxTotalLegalMoves)]
     for i in range(len(moves) // 2):
@@ -179,7 +137,7 @@ Grave
 def GRAVE(Table, board, played, tref):
     if (board.terminal()):
         return board.score()
-    t = look(Table, board)
+    t = Table.look(board)
     if t != None:
         tr = tref
         if t[0] > 50:
@@ -223,17 +181,16 @@ def GRAVE(Table, board, played, tref):
                 t[4][code] += res
         return res
     else:
-        addAMAF(Table, board)
+        Table.addAMAF(board)
         return board.playoutAMAF(played)
 
     
-def BestMoveGRAVE(board, n):
-    Table = {}
+def BestMoveGRAVE(Table, board, n):    
     for i in range(n):
-        t = look(Table, board)
+        t = Table.look(board)
         b1 = copy.deepcopy(board)
         res = GRAVE(Table, b1, [], t)
-    t = look(Table, board)
+    t = Table.look(board)
     moves = board.legalMoves()
     best = moves[0]
     bestValue = t[1][0]
@@ -250,7 +207,7 @@ RAVE
 def RAVE(Table, board, played):
     if (board.terminal()):
         return board.score()
-    t = look(Table, board)
+    t = Table.look(board)
     if t!=None:
         bestValue = -10000000.0
         best = 0
@@ -293,17 +250,16 @@ def RAVE(Table, board, played):
         # played.insert(0, moves[best])
         return res
     else:
-        addAMAF(Table, board)
+        Table.addAMAF(board)
         return board.playoutAMAF(played)
 
 
 
-def BestMoveRAVE(board, n):
-    Table = {}
+def BestMoveRAVE(Table, board, n):    
     for i in range(n):
         b1 = copy.deepcopy(board)
         res = RAVE(Table, b1, [])
-    t = look(Table, board)
+    t = Table.look(board)
     moves = board.legalMoves()
     best = moves[0]
     bestValue = t[1][0]
@@ -326,7 +282,7 @@ UCT
 def UCT(Table, board):
     if board.terminal():
         return board.score()
-    t = look(Table, board)
+    t = Table.look(board)
     if t != None:
         bestValue = -10000000.0
         best = 0
@@ -348,15 +304,14 @@ def UCT(Table, board):
         t[2][best] += res
         return res
     else:
-        add(Table, board)
+        Table.add(board)
         return board.playout()
 
-def BestMoveUCT(board, n):
-    Table = {}
+def BestMoveUCT(Table, board, n):    
     for i in range(n):
         b1 = copy.deepcopy(board)
         res = UCT(Table, b1)
-    t = look(Table, board)
+    t = Table.look(board)
     moves = board.legalMoves()
     best = moves[0]
     bestValue = t[1][0]
@@ -426,6 +381,9 @@ def UCB (board, n):
             bestMove = moves [m]
     return bestMove
 
+
+
+'''
 """
 Board Class
 """
@@ -628,7 +586,7 @@ class Move(object):
             return 5* (Dy * self.x1 + self.y1) + direction
         else:
             return 5*Dx*Dy+5*(Dy*self.x1 + self.y1) + direction
-
+'''
 if __name__=="__main__":
     res = 0
 
