@@ -6,8 +6,8 @@ Partie graphique réalisée avec Pygame
 
 import pygame as p
 import sys
-from modules import onitama as ONI
-from modules import play_functions
+from modules import onitama as GAME
+from modules import play_functions as PLAYERS
 from modules import transposition_table
 import time
 # import copy
@@ -17,11 +17,11 @@ import time
 Game and player constants. They communicate some things through the transposition table
 '''
 
-White = ONI.White
-Black = ONI.Black
-transposition_table.T_Table.MaxLegalMoves = ONI.ONITAMA_CARDS_IN_GAME * ONI.ONITAMA_MAX_MOVES_CARD * 5
+White = GAME.White
+Black = GAME.Black
+transposition_table.T_Table.MaxLegalMoves = GAME.ONITAMA_CARDS_IN_GAME * GAME.ONITAMA_MAX_MOVES_CARD * 5
 
-transposition_table.T_Table.MaxTotalLegalMoves = 2 * ONI.Dx * ONI.Dy * ONI.ONITAMA_CARDS_IN_GAME * ONI.ONITAMA_MAX_MOVES_CARD * 2 * 2
+transposition_table.T_Table.MaxTotalLegalMoves = 2 * GAME.Dx * GAME.Dy * GAME.ONITAMA_CARDS_IN_GAME * GAME.ONITAMA_MAX_MOVES_CARD * 2 * 2
 
 
 '''
@@ -57,7 +57,7 @@ def main():
     screen = p.display.set_mode((WIDTH, HEIGHT))
     clock = p.time.Clock()
     screen.fill(p.Color("white"))
-    gs = ONI.Board()
+    gs = GAME.Board()
     validMoves = gs.legalMoves()
     moveMade = False
     # loadImages()
@@ -89,7 +89,7 @@ def main():
                             sel_c= input("Select a card: ")
                             print("Chosen card: ", gs.chosen_cards[int(sel_c)])
                             
-                            move = ONI.Move(gs.turn,playerClicks[0][0], playerClicks[0][1],
+                            move = GAME.Move(gs.turn,playerClicks[0][0], playerClicks[0][1],
                             playerClicks[1][0], playerClicks[1][1], int(sel_c))
                             # print(move.getChessNotation())
                             for i in range(len(validMoves)):
@@ -111,7 +111,7 @@ def main():
                     validMoves = gs.legalMoves()
                     moveMade = False
             else:
-                gs.play (play_functions.UCB(gs, nb_coups))
+                gs.play (PLAYERS.UCB(gs, nb_coups))
                 validMoves = gs.legalMoves()
                 print_cards(gs)
                 moveMade = False
@@ -164,7 +164,7 @@ def main_bot_vs_bot():
     screen = p.display.set_mode((WIDTH, HEIGHT))
     clock = p.time.Clock()
     screen.fill(p.Color("white"))
-    gs = ONI.Board()
+    gs = GAME.Board()
     validMoves = gs.legalMoves()
     moveMade = False
     running = True
@@ -186,7 +186,7 @@ def main_bot_vs_bot():
                 """
                 UCB joue blanc
                 """
-                gs.play(play_functions.flat(gs, nb_coups))
+                gs.play(PLAYERS.flat(gs, nb_coups))
                 validMoves = gs.legalMoves()
                 moveMade = False
                 print("flat played")
@@ -196,7 +196,7 @@ def main_bot_vs_bot():
                 RAVE joue noir
                 """
                 # gs.play_random ()
-                gs.play(play_functions.UCB(gs, nb_coups))
+                gs.play(PLAYERS.UCB(gs, nb_coups))
                 validMoves = gs.legalMoves()
                 moveMade = False
                 print("UCB played")
@@ -207,9 +207,9 @@ def main_bot_vs_bot():
         time.sleep(2)
   
 
-def main_bot_vs_bot_console(bot1 = play_functions.UCB, bot2 = play_functions.flat, time_sleep = 1):
+def main_bot_vs_bot_console(bot1 = PLAYERS.UCB, bot2 = PLAYERS.flat, bot1_kwargs ={}, bot2_kwargs ={}, time_sleep = 1):
     
-    gs = ONI.Board()
+    gs = GAME.Board()
     running = True
     while running:        
         if gs.terminal():
@@ -221,7 +221,8 @@ def main_bot_vs_bot_console(bot1 = play_functions.UCB, bot2 = play_functions.fla
                 """
                 UCB joue blanc
                 """
-                move = bot1(gs, nb_coups)
+                bot1_kwargs['board'] = gs                
+                move = bot1(**bot1_kwargs)
                 gs.play(move)
                 print("bot 1 played")
                 print("Card: {}".format(gs.chosen_cards[move.card]))
@@ -231,7 +232,8 @@ def main_bot_vs_bot_console(bot1 = play_functions.UCB, bot2 = play_functions.fla
                 Flat joue noir
                 """
                 # gs.play_random ()
-                move = bot2(gs, nb_coups)
+                bot2_kwargs['board'] = gs
+                move = bot2(**bot2_kwargs)
                 gs.play(move)                
                 print("bot 2 played")
                 print("Card: {}".format(gs.chosen_cards[move.card]))
@@ -244,16 +246,16 @@ def print_cards(gs):
     print("White cards")
     for i in gs.w_cards:
         c_name = gs.chosen_cards[i]
-        c = ONI.cards[c_name]
+        c = GAME.cards[c_name]
         print("{}: {} -> {}".format(i, c_name, c))
     print("Middle card")    
     c_name = gs.chosen_cards[gs.m_card]
-    c = ONI.cards[c_name]
+    c = GAME.cards[c_name]
     print("{}: {} -> {}".format(gs.m_card, c_name, c))
     print("Black cards")
     for i in gs.b_cards:
         c_name = gs.chosen_cards[i]
-        c = ONI.cards[c_name]
+        c = GAME.cards[c_name]
         print("{}: {} -> {}".format(i, c_name, c))
     print("Board")
     print(gs.board)
@@ -261,8 +263,8 @@ def print_cards(gs):
 """
 Main pour joueur à la main contre un programme en utilisant la console
 """
-def main_console(player = play_functions.UCB, nb_steps = 100, **kwargs):
-    gs = ONI.Board()
+def main_console(player = PLAYERS.UCB, nb_steps = 100, **kwargs):
+    gs = GAME.Board()
     while not gs.terminal():
         if gs.turn == White:
             # Show cards
@@ -277,10 +279,10 @@ def main_console(player = play_functions.UCB, nb_steps = 100, **kwargs):
                             
             sel_m = input("Select move from card (using index): ")
             c_name = gs.chosen_cards[int(sel_c)]
-            c = ONI.cards[c_name]
+            c = GAME.cards[c_name]
             m = c[int(sel_m)]
             new_coords = [coords[0] + m[0], coords[1] + m[1]]
-            move = ONI.Move(White, coords[0], coords[1], new_coords[0], new_coords[1], int(sel_c))
+            move = GAME.Move(White, coords[0], coords[1], new_coords[0], new_coords[1], int(sel_c))
             gs.play(move)
             
         else:
@@ -300,6 +302,12 @@ if __name__ == "__main__":
     # main_console()
     
     # main()
+    T1 = transposition_table.T_Table()
+    T2 = transposition_table.T_Table()
+    bot1 = PLAYERS.SequentialHalving
+    bot1_kwargs = {'Table': T1,'n': nb_coups}
     
-    main_bot_vs_bot_console()
+    bot2 = PLAYERS.BestMoveGRAVE
+    bot2_kwargs = {'Table': T2, 'n': nb_coups}
+    main_bot_vs_bot_console(bot1, bot2, bot1_kwargs, bot2_kwargs)
     

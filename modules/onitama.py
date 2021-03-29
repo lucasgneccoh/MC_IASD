@@ -41,22 +41,22 @@ MaxTotalLegalMoves = 2 * Dx * Dy * ONITAMA_CARDS_IN_GAME * ONITAMA_MAX_MOVES_CAR
 List of all cards
 """
 
-cards = {"Hahn":[(-1,1),(0,1), (0,-1),(1,-1)],
-"Krabbe":[(0,-2), (-1,0),(0,2)],
-"Wild-Schwein":[(0,-1), (-1,0),(0,1)],
-"Drache":[(-1,-2), (-1,2),(1,-1),(1,1)],
-"Affe":[(-1,-1), (-1,1),(1,-1),(1,1)],
+cards = {"Rooster":[(-1,1),(0,1), (0,-1),(1,-1)],
+"Crab":[(0,-2), (-1,0),(0,2)],
+"Boar":[(0,-1), (-1,0),(0,1)],
+"Dragon":[(-1,-2), (-1,2),(1,-1),(1,1)],
+"Monkey":[(-1,-1), (-1,1),(1,-1),(1,1)],
 "Elefant":[(-1,-1), (-1,1),(0,-1),(0,1)],
-"Hase":[(1,-1), (-1,1),(0,2)],
-"Gottes-Anbeterin":[(-1,-1), (-1,1),(1,0)],
-"Pferd":[(0,-1), (-1,0),(1,0)],
-"Aal":[(-1,-1), (1,-1),(0,1)],
+"Rabbit":[(1,-1), (-1,1),(0,2)],
+"Mantis":[(-1,-1), (-1,1),(1,0)],
+"Horse":[(0,-1), (-1,0),(1,0)],
+"Eel":[(-1,-1), (1,-1),(0,1)],
 "Tiger":[(-2,0), (1,0)],
-"Gans":[(-1,-1), (1,1),(0,-1), (0,1)],
-"Kobra":[(0,-1), (-1,1),(1,1)],
-"Frosch":[(0,-2), (-1,-1),(1,1)],
-"Kranich":[(-1,0), (1,-1),(1,1)],
-"Ochse":[(-1,0), (1,0),(0,1)]}
+"Goose":[(-1,-1), (1,1),(0,-1), (0,1)],
+"Cobra":[(0,-1), (-1,1),(1,1)],
+"Frog":[(0,-2), (-1,-1),(1,1)],
+"Crane":[(-1,0), (1,-1),(1,1)],
+"Ox":[(-1,0), (1,0),(0,1)]}
 
 """
 Board class
@@ -199,6 +199,16 @@ class Board(object):
             return self.score()
         n = random.randint (0, len (moves) - 1)
         self.play (moves [n])
+    
+    def playoutAMAF(self, played):
+        while(True):
+            moves = []
+            moves = self.legalMoves()
+            if len(moves) == 0 or self.terminal():
+                return self.score()
+            n = random.randint(0, len(moves) - 1)
+            played += [moves[n].code(self)]
+            self.play(moves[n])
 
 """
 Move class
@@ -233,8 +243,13 @@ class Move(object):
         return True
     
     def move_index_in_card(self, board):
-        look_for = (self.x1 - self.x2, self.x1 - self.x2)
+        if self.color == White:
+            look_for = (self.x2 - self.x1, self.y2 - self.y1)
+        elif self.color == Black:
+            look_for = (self.x1 - self.x2, self.y1 - self.y2)
+        # print('look for: ', look_for)
         for k, move in enumerate(cards[board.chosen_cards[self.card]]):
+            # print('move: ', move)
             if look_for[0]==move[0] and look_for[1]==move[1]:
                 return k
         return None
@@ -245,7 +260,7 @@ class Move(object):
         Maybe also if it is made by a pion or the sensei?
         """
         init_pos = Dy * self.x1 + self.y1 # 25 options
-        card = self.card # 5 options
+        card = self.card # 5 options        
         move_index = self.move_index_in_card(board) # 4 options
         captures = 0 if board.board[self.x2,self.y2] == Empty else 1 # 2 options
         is_sensei = 1 if abs(board.board[self.x1,self.y1])>1 else 0 # 2 options
@@ -254,6 +269,7 @@ class Move(object):
         # Total of 2000 options for each color
         # Order is
         # color -> is_sensei -> captures -> move_index -> card -> position
+        # print(color, is_sensei, captures, move_index, card, init_pos)
         return 2000*color + 1000*is_sensei + 500*captures + 125*move_index + 25*card + init_pos
         
     def __repr__(self):

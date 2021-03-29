@@ -42,17 +42,17 @@ Fonctions utiles hors classes pour les algorithmes
 Shuss
 """
 
-def SHUSS(Table, board, budget, c = 128):
+def SHUSS(Table, board, n, c = 128):
     
-    Table.addAMAF(Table, board)
-    t = Table.look(Table, board)
+    Table.addAMAF(board)
+    t = Table.look(board)
     moves = board.legalMoves()
     total = len(moves)
     nbplayouts = [0.0 for x in range(Table.MaxTotalLegalMoves)]
     nbwins = [0.0 for x in range(Table.MaxTotalLegalMoves)]
     while len(moves) > 1:
         for m in moves:
-            for i in range(int(budget / (len(moves) * np.log2(total)))):
+            for i in range(int(n / (len(moves) * np.log2(total)))):
                 b = copy.deepcopy(board)
                 b.play(m)
                 played = [m.code(board)]
@@ -91,7 +91,7 @@ def bestHalfSHUSS(t, board, moves, nbwins, nbplayouts, c = 128, MaxTotalLegalMov
 SequentialHalving
 """
 
-def SequentialHalving(Table, board, budget): 
+def SequentialHalving(Table, board, n): 
     
     moves = board.legalMoves()
     total = len(moves)
@@ -99,7 +99,7 @@ def SequentialHalving(Table, board, budget):
     nbwins = [0.0 for x in range(Table.MaxTotalLegalMoves)]
     while len(moves) > 1:
         for m in moves:
-            for i in range(int(budget / (len(moves)*np.log2(total)))):
+            for i in range(int(n / (len(moves)*np.log2(total)))):
                 b = copy.deepcopy(board)
                 b.play(m)
                 res = UCT(Table, b)
@@ -331,17 +331,18 @@ def flat (board, n):
     moves = board.legalMoves ()
     bestScore = 0
     bestMove = moves [0]
-    for m in range (len(moves)):
-        sum = 0
-        for i in range (n):
+    M = len(moves)
+    for m in range (M):
+        s = 0
+        for i in range (n//M):
             b = copy.deepcopy (board)
             b.play (moves [m])
             r = b.playout ()
             if board.turn == Black:
                 r = 1 - r
-            sum = sum + r
-        if sum > bestScore:
-            bestScore = sum
+            s = s + r
+        if s > bestScore:
+            bestScore = s
             bestMove = moves [m]
     return bestMove
 
