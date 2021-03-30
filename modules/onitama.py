@@ -127,7 +127,7 @@ class Board(object):
         """
         if (self.board [0] [2] == WhiteK):
             return 1.0
-        elif (self.board [Dx - 1] [2] == Black):
+        elif (self.board [Dx - 1] [2] == BlackK):
             return 0.0
         """
         Checking if one of the Sensei died

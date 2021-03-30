@@ -159,7 +159,7 @@ def drawPieces(screen, board):
 Main pour faire jouer deux bots l'un contre l'autre en utilisant le GUI
 """
 
-def main_bot_vs_bot():
+def main_bot_vs_bot(bot1, bot2, bot1_kwargs, bot2_kwargs):
     p.init()
     screen = p.display.set_mode((WIDTH, HEIGHT))
     clock = p.time.Clock()
@@ -186,25 +186,27 @@ def main_bot_vs_bot():
                 """
                 UCB joue blanc
                 """
-                gs.play(PLAYERS.flat(gs, nb_coups))
-                validMoves = gs.legalMoves()
-                moveMade = False
-                print("flat played")
+                bot1_kwargs['board'] = gs                
+                move = bot1(**bot1_kwargs)
+                gs.play(move)
+                print("bot 1 played")
+                print("Card: {}".format(gs.chosen_cards[move.card]))
                 print(gs.board)
             elif gs.turn == Black:
                 """
-                RAVE joue noir
+                Flat joue noir
                 """
                 # gs.play_random ()
-                gs.play(PLAYERS.UCB(gs, nb_coups))
-                validMoves = gs.legalMoves()
-                moveMade = False
-                print("UCB played")
+                bot2_kwargs['board'] = gs
+                move = bot2(**bot2_kwargs)
+                gs.play(move)                
+                print("bot 2 played")
+                print("Card: {}".format(gs.chosen_cards[move.card]))
                 print(gs.board)
         else:
             p.quit()
             sys.exit()
-        time.sleep(2)
+        # time.sleep(2)
   
 
 def main_bot_vs_bot_console(bot1 = PLAYERS.UCB, bot2 = PLAYERS.flat, bot1_kwargs ={}, bot2_kwargs ={}, time_sleep = 1):
@@ -296,7 +298,7 @@ def main_console(player = PLAYERS.UCB, nb_steps = 100, **kwargs):
 
 
 if __name__ == "__main__":
-    nb_coups = 100
+    nb_coups = 1000
     
     # if player function requires a transposition table, it must be passed to the main function as a kwarg Table = t_table
     # main_console()
@@ -304,10 +306,10 @@ if __name__ == "__main__":
     # main()
     T1 = transposition_table.T_Table()
     T2 = transposition_table.T_Table()
-    bot1 = PLAYERS.SequentialHalving
+    bot1 = PLAYERS.BestMoveGRAVE
     bot1_kwargs = {'Table': T1,'n': nb_coups}
     
-    bot2 = PLAYERS.BestMoveGRAVE
+    bot2 = PLAYERS.SHUSS
     bot2_kwargs = {'Table': T2, 'n': nb_coups}
-    main_bot_vs_bot_console(bot1, bot2, bot1_kwargs, bot2_kwargs)
+    main_bot_vs_bot(bot1, bot2, bot1_kwargs, bot2_kwargs)
     
