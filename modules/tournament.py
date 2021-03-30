@@ -5,6 +5,9 @@ import onitama as GAME
 from itertools import combinations
 import transposition_table as T
 import time
+import elo
+import matplotlib.pyplot as plt
+from random import shuffle
 
 pd.options.mode.chained_assignment = None  # default='warn'
 
@@ -123,75 +126,7 @@ except:
     df_hist = pd.DataFrame(columns = ["White", "Black", "Winner", "Elo White Before", "Elo Black Before", "Elo White After","Elo Black After"])
     df_hist.to_csv("../data/matches_history.csv")
 
-# import numpy as np
 
-"""
-Fonctions elo
-"""
-
-import matplotlib.pyplot as plt
-from random import shuffle
-
-def p(D):
-    return 1.0/(1.0 + 10.0**(-D/400))
-
-def K(nb_played):
-    # if nb_played < 10:
-    #     return 40
-    # elif 10 <= nb_played < 20:
-    #     return 30
-    # else:
-    #     return 20
-    return 40
-
-def updateElo(W, bot1, bot2):
-    """
-    W = 1 si bot1 gagne, 0.5 si match nul, 0 si bot2 gagne
-    """
-    D = df["elo"][bot1.name] - df["elo"][bot2.name]
-    df["elo"][bot1.name] = int(df["elo"][bot1.name] + K(df["nb_played"][bot1.name])*(W - p(D)))
-    df["elo"][bot2.name] = int(df["elo"][bot2.name] + K(df["nb_played"][bot2.name])*(1.0 - W - p(-D)))
-    # played[bot1] += 1
-    # played[bot2] += 1
-
-def updateTable(df, df_hist, white_bot, black_bot, res):
-    try:
-        hist = {"White":white_bot.name, "Black":black_bot.name,
-        "Elo White Before":df["elo"][white_bot.name],
-        "Elo Black Before":df["elo"][black_bot.name]}
-    except KeyError as e:
-        print("A bot was not found in the history table. Trying to add it")
-        raise e
-        
-            
-        
-
-    if res == 1.0:
-        list_res = df[black_bot.name][white_bot.name].split("/")
-        list_res[0] = int(list_res[0])
-        list_res[1] = int(list_res[1])
-        list_res[0] += 1
-        df[black_bot.name][white_bot.name] = "/".join([str(res) for res in list_res])
-        hist["Winner"] = white_bot.name
-        # df[black_bot.name][white_bot.name][0] += 1
-
-    else:
-        list_res = df[white_bot.name][black_bot.name].split("/")
-        list_res[0] = int(list_res[0])
-        list_res[1] = int(list_res[1])
-        list_res[1] += 1
-        df[white_bot.name][black_bot.name] = "/".join([str(res) for res in list_res])
-        hist["Winner"] = black_bot.name
-
-    updateElo(W = res, bot1 = white_bot, bot2 = black_bot)
-
-    df["nb_played"][black_bot.name] +=1
-    df["nb_played"][white_bot.name] +=1
-    hist["Elo White After"] = df["elo"][white_bot.name]
-    hist["Elo Black After"] = df["elo"][black_bot.name]
-    # df_hist = df_hist.append(hist, ignore_index = True)
-    return hist
-    
 
 """
 main
@@ -217,7 +152,7 @@ for round in range(2):
         counter += 1
         print("Winner: {}".format(white_bot.name if res >0.5 else black_bot.name))
         
-        hist = updateTable(df, df_hist, white_bot, black_bot, res)
+        hist = elo.updateTable(df, df_hist, white_bot, black_bot, res)
         df_hist = df_hist.append(hist, ignore_index = True)
         df.to_csv("../data/bots.csv")
         df_hist.to_csv("../data/matches_history.csv", index = False)
@@ -232,12 +167,16 @@ for round in range(2):
         counter += 1
         print("Winner: {}".format(white_bot.name if res >0.5 else black_bot.name))
       
-        hist = updateTable(df, df_hist, white_bot, black_bot, res)
+        hist = elo.updateTable(df, df_hist, white_bot, black_bot, res)
         df_hist = df_hist.append(hist, ignore_index = True)
         df.to_csv("../data/bots.csv")
         df_hist.to_csv("../data/matches_history.csv", index = False)
 
 simple_table.to_csv("../data/simple_table.csv", index = False)
+
+
+
+
 # white_bot, black_bot = sh1000, shu1000_c64
 # res = bot1_vs_bot2(white_bot = white_bot, black_bot = black_bot, verbose = True)
 # print(res)

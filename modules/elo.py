@@ -13,15 +13,54 @@ def K(nb_played):
     else:
         return 20
 
-def updateElo(W, bot1, bot2):
+def updateElo(W, bot1, bot2, df):
     """
     W = 1 si bot1 gagne, 0.5 si match nul, 0 si bot2 gagne
     """
-    D = elo[bot1] - elo[bot2]
-    elo[bot1] = elo[bot1] + K(played[bot1])*(W - p(D))
-    elo[bot2] = elo[bot2] + K(played[bot2])*(1 - W - p(-D))
-    played[bot1] += 1
-    played[bot2] += 1
+    D = df["elo"][bot1.name] - df["elo"][bot2.name]
+    df["elo"][bot1.name] = int(df["elo"][bot1.name] + K(df["nb_played"][bot1.name])*(W - p(D)))
+    df["elo"][bot2.name] = int(df["elo"][bot2.name] + K(df["nb_played"][bot2.name])*(1.0 - W - p(-D)))
+    
+def updateTable(df, df_hist, white_bot, black_bot, res):
+    try:
+        hist = {"White":white_bot.name, "Black":black_bot.name,
+        "Elo White Before":df["elo"][white_bot.name],
+        "Elo Black Before":df["elo"][black_bot.name]}
+    except KeyError as e:
+        print("A bot was not found in the history table")
+        raise e
+        
+            
+        
+
+    if res == 1.0:
+        list_res = df[black_bot.name][white_bot.name].split("/")
+        list_res[0] = int(list_res[0])
+        list_res[1] = int(list_res[1])
+        list_res[0] += 1
+        df[black_bot.name][white_bot.name] = "/".join([str(res) for res in list_res])
+        hist["Winner"] = white_bot.name
+        # df[black_bot.name][white_bot.name][0] += 1
+
+    else:
+        list_res = df[white_bot.name][black_bot.name].split("/")
+        list_res[0] = int(list_res[0])
+        list_res[1] = int(list_res[1])
+        list_res[1] += 1
+        df[white_bot.name][black_bot.name] = "/".join([str(res) for res in list_res])
+        hist["Winner"] = black_bot.name
+
+    updateElo(W = res, bot1 = white_bot, bot2 = black_bot, df = df)
+
+    df["nb_played"][black_bot.name] +=1
+    df["nb_played"][white_bot.name] +=1
+    hist["Elo White After"] = df["elo"][white_bot.name]
+    hist["Elo Black After"] = df["elo"][black_bot.name]
+    # df_hist = df_hist.append(hist, ignore_index = True)
+    return hist
+
+
+#######################################################
 
 def fight(bot1, bot2):
     res = np.random.random()*force[bot1] - np.random.random()*force[bot2]
