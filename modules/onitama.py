@@ -119,6 +119,9 @@ class Board(object):
                     
                     else:
                         pass
+        if len(moves) == 0:
+            for ind_card in self.w_cards:
+                moves += [Move(self.turn, 0, 0, 0, 0, ind_card)]
         return moves
 
     def score(self):
@@ -227,9 +230,10 @@ class Move(object):
         """
         Implémente l'égalité entre deux instances de la classe Move
         ?? Add the card to the move comparison?
+        Yes c'est fait merci !!
         """
         if isinstance(other, Move):
-            if self.color == other.color and self.x1 == other.x1 and self.x2 == other.x2 and self.y1 == other.y1 and self.y2 == other.y2:
+            if self.color == other.color and self.x1 == other.x1 and self.x2 == other.x2 and self.y1 == other.y1 and self.y2 == other.y2 and self.card == other.card:
                 return True
         return False
 
