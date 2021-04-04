@@ -65,27 +65,29 @@ def bot1_vs_bot2(white_bot, black_bot, verbose = False):
 # new = Test("lol",du_sal ,x= 1 ,y = 2,z = 4)
 # print(new.play(4))
 
-# shu1000_c4 = Bot("SHUSS_1000_C4", PLAYERS.SHUSS, n=1000, c = 4)
-# shu1000_c16 = Bot("SHUSS_1000_C16", PLAYERS.SHUSS, n=1000, c = 16)
-# shu1000_c64 = Bot("SHUSS_1000_C64", PLAYERS.SHUSS, n=1000, c = 64)
-# shu1000_c128 = Bot("SHUSS_1000_C128", PLAYERS.SHUSS, n=1000, c = 128)
-# shu1000_c256 = Bot("SHUSS_1000_C256", PLAYERS.SHUSS, n=1000, c = 256)
+n_tot = 1000
 
-# uct1000 = Bot("UCT_1000", PLAYERS.BestMoveUCT, n=1000)
-# sh1000 = Bot("SH_1000", PLAYERS.SequentialHalving, n=1000)
-# gr1000 = Bot("GRAVE_1000", PLAYERS.BestMoveGRAVE, n=1000)
-r1000 = Bot("RAVE_1000", PLAYERS.BestMoveRAVE, n=1000)
-ucb1000 = Bot("UCB_1000", PLAYERS.UCB, n=1000)
-flat1000 = Bot("FLAT_1000", PLAYERS.UCB, n=1000)
+# shu1000_c4 = Bot("SHUSS_1000_C4", PLAYERS.SHUSS, n=n_tot, c = 4, Table = T.T_Table())
+# shu1000_c16 = Bot("SHUSS_1000_C16", PLAYERS.SHUSS, n=n_tot, c = 16, Table = T.T_Table())
+# shu1000_c64 = Bot("SHUSS_1000_C64", PLAYERS.SHUSS, n=n_tot, c = 64, Table = T.T_Table())
+# shu1000_c128 = Bot("SHUSS_1000_C128", PLAYERS.SHUSS, n=n_tot, c = 128, Table = T.T_Table())
+# shu1000_c256 = Bot("SHUSS_1000_C256", PLAYERS.SHUSS, n=n_tot, c = 256, Table = T.T_Table())
 
-r500 = Bot("RAVE_500", PLAYERS.BestMoveRAVE, n=500, Table = T.T_Table())
-ucb500 = Bot("UCB_500", PLAYERS.UCB, n=500)
-flat500 = Bot("FLAT_500", PLAYERS.flat, n=500)
+uct1000 = Bot("UCT_1000", PLAYERS.BestMoveUCT, n=n_tot, Table = T.T_Table())
+# sh1000 = Bot("SH_1000", PLAYERS.SequentialHalving, n=n_tot, Table = T.T_Table())
+gr1000 = Bot("GRAVE_1000", PLAYERS.BestMoveGRAVE, n=n_tot, Table = T.T_Table())
+r1000 = Bot("RAVE_1000", PLAYERS.BestMoveRAVE, n=n_tot, Table = T.T_Table())
+ucb1000 = Bot("UCB_1000", PLAYERS.UCB, n=n_tot)
+flat1000 = Bot("FLAT_1000", PLAYERS.flat, n=n_tot)
+
+# r500 = Bot("RAVE_500", PLAYERS.BestMoveRAVE, n=500, Table = T.T_Table())
+# ucb500 = Bot("UCB_500", PLAYERS.UCB, n=500)
+# flat500 = Bot("FLAT_500", PLAYERS.flat, n=500)
 
 
-r50= Bot("RAVE_50", PLAYERS.BestMoveRAVE, n=50, Table = T.T_Table())
-ucb50 = Bot("UCB_50", PLAYERS.UCB, n=50)
-flat50 = Bot("FLAT_50", PLAYERS.flat, n=50)
+# r50= Bot("RAVE_50", PLAYERS.BestMoveRAVE, n=50, Table = T.T_Table())
+# ucb50 = Bot("UCB_50", PLAYERS.UCB, n=50)
+# flat50 = Bot("FLAT_50", PLAYERS.flat, n=50)
 
 # uct100 = Bot("UCT_100", PLAYERS.BestMoveUCT, n=100)
 # sh100 = Bot("SH_100", PLAYERS.SequentialHalving, n=100)
@@ -96,16 +98,17 @@ flat50 = Bot("FLAT_50", PLAYERS.flat, n=50)
 # shu100_c128 = Bot("SHUSS_100_C128", BtEngine.SHUSS, n=100, c = 128)
 
 # all_bots = [shu1000_c16, shu1000_c64, shu1000_c128, shu1000_c256, uct1000, sh1000, gr1000, r1000, ucb1000, flat1000]
+all_bots = [uct1000,  gr1000, r1000, ucb1000, flat1000]
 
-all_bots = [r500, ucb500, flat500]
-all_bots = [r50, ucb50, flat50]
+# all_bots = [r500, ucb500, flat500]
+# all_bots = [r50, ucb50, flat50]
 
 """
 Fichier bots.csv avec les elos et les wins
 """
 
 try:
-    df = pd.read_csv("../data/bots.csv", index_col="bot")
+    df = pd.read_csv("data/bots.csv", index_col="bot")
     for b in all_bots:
         if not b in df.columns:
             raise Exception('New bot. Reseting table')
@@ -114,17 +117,17 @@ except:
     for i, bot in enumerate(all_bots):
         df.loc[i] = [bot.name, 1200, 0] + ["0/0"]*len(all_bots)
     df.set_index("bot", inplace=True)
-    df.to_csv("../data/bots.csv")
+    df.to_csv("data/bots.csv")
 
 """
 Fichier matches_history.csv avec l'historique des parties
 """
 
 try:
-    df_hist = pd.read_csv("../data/matches_history.csv")    
+    df_hist = pd.read_csv("data/matches_history.csv")    
 except:
     df_hist = pd.DataFrame(columns = ["White", "Black", "Winner", "Elo White Before", "Elo Black Before", "Elo White After","Elo Black After"])
-    df_hist.to_csv("../data/matches_history.csv")
+    df_hist.to_csv("data/matches_history.csv")
 
 
 
@@ -154,8 +157,8 @@ for round in range(2):
         
         hist = elo.updateTable(df, df_hist, white_bot, black_bot, res)
         df_hist = df_hist.append(hist, ignore_index = True)
-        df.to_csv("../data/bots.csv")
-        df_hist.to_csv("../data/matches_history.csv", index = False)
+        df.to_csv("data/bots.csv")
+        df_hist.to_csv("data/matches_history.csv", index = False)
 
         white_bot, black_bot = all_matches[i][1], all_matches[i][0]
         # print("*"*20)
@@ -169,10 +172,10 @@ for round in range(2):
       
         hist = elo.updateTable(df, df_hist, white_bot, black_bot, res)
         df_hist = df_hist.append(hist, ignore_index = True)
-        df.to_csv("../data/bots.csv")
-        df_hist.to_csv("../data/matches_history.csv", index = False)
+        df.to_csv("data/bots.csv")
+        df_hist.to_csv("data/matches_history.csv", index = False)
 
-simple_table.to_csv("../data/simple_table.csv", index = False)
+simple_table.to_csv("data/simple_table.csv", index = False)
 
 
 

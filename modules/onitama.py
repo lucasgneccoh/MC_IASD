@@ -119,9 +119,9 @@ class Board(object):
                     
                     else:
                         pass
-        if len(moves) == 0:
-            for ind_card in self.w_cards:
-                moves += [Move(self.turn, 0, 0, 0, 0, ind_card)]
+        # if len(moves) == 0:
+        #     for ind_card in self.w_cards:
+        #         moves += [Move(self.turn, 0, 0, 0, 0, ind_card)]
         return moves
 
     def score(self):
@@ -137,6 +137,13 @@ class Board(object):
         """
         if abs(self.board.sum()) >= 5:
             if self.board.sum() > 0:
+                return 1.0
+            else:
+                return 0.0
+
+        l = self.legalMoves ()
+        if len (l) == 0:
+            if self.turn == Black:
                 return 1.0
             else:
                 return 0.0
