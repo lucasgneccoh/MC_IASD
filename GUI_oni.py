@@ -282,9 +282,6 @@ def main(**kwargs):
                           '''
                           print("Board: cell selected: ({},{})".format(row, col))
                           
-                          
-                          
-                          
                           if is_on_own_piece(gs, row, col):
                             # Only works for selecting first piece to move                            
                             if not first_piece_selected is None:
@@ -344,7 +341,7 @@ def main(**kwargs):
                                        
             else:
                 # Bot plays
-                gs.play (PLAYERS.BestMoveUCT(T, gs, nb_coups))
+                gs.play (PLAYERS.SHUSS(T, gs, nb_coups))
                 if gs.terminal():
                   print("END")
                   block_game=True
@@ -497,7 +494,7 @@ if __name__ == "__main__":
     GUI human vs bot
     """
     if True:
-      main(nb_coups = 100)
+      main(nb_coups = 500)
   
   
     

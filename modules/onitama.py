@@ -107,7 +107,7 @@ class Board(object):
             for j in range(0, Dy):
                 if self.board[i][j] * self.turn > 0: ## on vérifie si c'est la meme couleur
                     if self.turn == White:
-                        for ind_card in self.w_cards:
+                        for ind_card in sorted(self.w_cards):
                             for move_card in cards[self.chosen_cards[ind_card]]:
                                 x2, y2 = i + move_card[0], j + move_card[1]
                                 m = Move(self.turn, i, j, x2, y2, ind_card)
@@ -116,7 +116,7 @@ class Board(object):
 
 
                     elif self.turn == Black:
-                        for ind_card in self.b_cards:
+                        for ind_card in sorted(self.b_cards):
                             for move_card in cards[self.chosen_cards[ind_card]]:
                                 x2, y2 = i - move_card[0], j - move_card[1]
                                 m = Move(self.turn, i, j, x2, y2, ind_card)
@@ -205,7 +205,7 @@ class Board(object):
             moves = self.legalMoves()
             if self.terminal():
                 return self.score()
-            n = random.randint (0, len (moves) - 1)
+            n = np.random.randint(0,len(moves))
             self.play (moves [n])
             # input("Next ?")
 
@@ -213,7 +213,7 @@ class Board(object):
         moves = self.legalMoves()
         if self.terminal():
             return self.score()
-        n = random.randint (0, len (moves) - 1)
+        n = np.random.randint(0,len(moves))
         self.play (moves [n])
     
     def playoutAMAF(self, played):
@@ -222,7 +222,7 @@ class Board(object):
             moves = self.legalMoves()
             if len(moves) == 0 or self.terminal():
                 return self.score()
-            n = random.randint(0, len(moves) - 1)
+            n = np.random.randint(0,len(moves))
             played += [moves[n].code(self)]
             self.play(moves[n])
             
@@ -305,9 +305,9 @@ class Move(object):
         card = self.card # 5 options        
         move_index = self.move_index_in_card(board) # 4 options
         captures = 0 if board.board[self.x2,self.y2] == Empty else 1 # 2 options
-        is_sensei = 1 if abs(board.board[self.x1,self.y1])>1 else 0 # 2 options
+        is_sensei = 1 if abs(board.board[self.x1,self.y1])>2 else 0 # 2 options
         color = 0 if self.color == White else 1
-        # 25-position, 5-card, 4-move_per_card, 2-is_capture, 2-is_sensei
+        # 25-position, 5-card, max 4-move_per_card, 2-is_capture, 2-is_sensei
         # Total of 2000 options for each color
         # Order is
         # color -> is_sensei -> captures -> move_index -> card -> position

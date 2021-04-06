@@ -7,6 +7,8 @@ Algorithmes MCTS, cours de Tristan CAZENAVE (https://www.lamsade.dauphine.fr/~ca
 import numpy as np
 import copy
 import sys
+from tqdm import tqdm
+
 ##Constantes
 
 '''
@@ -30,6 +32,7 @@ def SHUSS(Table, board, n, c = 128):
     total = len(moves)
     nbplayouts = [0.0 for x in range(Table.MaxTotalLegalMoves)]
     nbwins = [0.0 for x in range(Table.MaxTotalLegalMoves)]
+    
     while len(moves) > 1:
         M = int(n / (len(moves) * np.log2(total)))
         for m in moves:          
@@ -273,7 +276,7 @@ def UCT(Table, board, depth=0):
     if board.terminal():
         return board.score()
     if depth >= sys.getrecursionlimit()-MAX_RECURSION_DELTA :
-      return board.score()
+        return board.score()
     t = Table.look(board)
     if t != None:
         bestValue = -10000000.0
@@ -388,218 +391,6 @@ Same move player
 def same_move(board):
     return board.legalMoves ()[0]
 
-'''
-"""
-Board Class
-"""
 
-class Board(object):
-    def __init__(self):
-        self.h = 0
-        self.turn = White
-        self.board = np.zeros((Dx, Dy))
-        for i in range (0, 2):
-            for j in range (0, Dy):
-                self.board[i][j] = White
-        for i in range (Dx - 2, Dx):
-            for j in range (0, Dy):
-                self.board[i][j] = Black
-
-    def play (self, move):
-        col = int (self.board [move.x2] [move.y2])
-        if col != Empty:
-            self.h = self.h ^ hashTable [col] [move.x2] [move.y2]
-        self.h = self.h ^ hashTable [move.color] [move.x2] [move.y2]
-        self.h = self.h ^ hashTable [move.color] [move.x1] [move.y1]
-        self.h = self.h ^ hashTurn
-        self.board [move.x2] [move.y2] = move.color
-        self.board [move.x1] [move.y1] = Empty
-        if (move.color == White):
-            self.turn = Black
-        else:
-            self.turn = White
-
-    
-    
-    
-    
-    """
-    Fonctions de base pour le Breaktrough
-    """
-
-    def legalMoves(self):
-        """
-        Liste des coups autorisés
-        """
-        moves = []
-        for i in range (0, Dx):
-            for j in range (0, Dy):
-                if self.board [i] [j] == self.turn:
-                    for k in [-1, 0, 1]:
-                        for l in [-1, 0, 1]:
-                            m = Move (self.turn, i, j, i + k, j + l)
-                            if m.valid (self):
-                                moves.append (m)
-        return moves
-
-    def score (self):
-        """
-        Renvoie le score, 1 si blanc gagne, 0 si noir gagne, 0.5 si la partie n'est pas finie
-        """
-        for i in range (0, Dy):
-            if (self.board [Dx - 1] [i] == White):
-                return 1.0
-            elif (self.board [0] [i] == Black):
-                return 0.0
-        l = self.legalMoves ()
-        if len (l) == 0:
-            if self.turn == Black:
-                return 1.0
-            else:
-                return 0.0
-        return 0.5
- 
-    def terminal (self):
-        """
-        Si la partie est finie, renvoie True
-        """
-        if self.score () == 0.5:
-            return False
-        return True
-
-    """
-    Playout aléatoires
-    """
-
-    def playout (self):
-        while (True):
-            moves = self.legalMoves()
-            if self.terminal():
-                return self.score()
-            n = random.randint (0, len (moves) - 1)
-            self.play (moves [n])
-            # print(self.board)
-
-    def playoutAMAF(self, played):
-        while(True):
-            moves = []
-            moves = self.legalMoves()
-            if len(moves) == 0 or self.terminal():
-                return self.score()
-            n = random.randint(0, len(moves) - 1)
-            played += [moves[n].code(self)]
-            self.play(moves[n])
-            
-
-    """
-    Fonctions faisant s'affronter deux algorithmes
-    """
-
-    def playflat_vs_random(self):
-        while (True):
-            moves = self.legalMoves()
-            if self.terminal():
-                return self.score()
-            if self.turn == White:
-                self.play(flat (board, 10))
-            else:
-                n = random.randint (0, len (moves) - 1)
-                self.play (moves [n])
-            # print(self.board)
-
-    def RAVE_vs_UCB(self, nb_coups = 10, verbose = True):
-        while (True):
-            moves = self.legalMoves()
-            if self.terminal():
-                return self.score()
-            if self.turn == Black:
-                self.play(BestMoveRAVE (board, nb_coups))
-            else:
-                # n = random.randint (0, len (moves) - 1)
-                self.play (UCB (board, nb_coups))
-            if verbose:
-                print(self.board)  
-
-"""
-Move Class
-"""
-
-class Move(object):
-    def __init__(self, color, x1, y1, x2, y2):
-        self.color = color
-        self.x1 = x1
-        self.y1 = y1
-        self.x2 = x2
-        self.y2 = y2
-
-    def __eq__(self, other):
-        """
-        Implémente l'égalité entre deux instances de la classe Move
-        """
-        if isinstance(other, Move):
-            if self.color == other.color and self.x1 == other.x1 and self.x2 == other.x2 and self.y1 == other.y1 and self.y2 == other.y2:
-                return True
-        return False
-
-    def valid (self, board):
-        """
-        Le move est-il valide ?
-        """
-        if self.x2 >= Dx or self.y2 >= Dy or self.x2 < 0 or self.y2 < 0:
-            return False
-        if self.color == White:
-            if self.x2 != self.x1 + 1:
-                return False
-            if board.board [self.x2] [self.y2] == Black:
-                if self.y2 == self.y1 + 1 or self.y2 == self.y1 - 1:
-                    return True
-                return False
-            elif board.board [self.x2] [self.y2] == Empty:
-                if self.y2 == self.y1 + 1 or self.y2 == self.y1 - 1 or self.y2 == self.y1:
-                    return True
-                return False
-        elif self.color == Black:
-            if self.x2 != self.x1 - 1:
-                return False
-            if board.board [self.x2] [self.y2] == White:
-                if self.y2 == self.y1 + 1 or self.y2 == self.y1 - 1:
-                    return True
-                return False
-            elif board.board [self.x2] [self.y2] == Empty:
-                if self.y2 == self.y1 + 1 or self.y2 == self.y1 - 1 or self.y2 == self.y1:
-                    return True
-                return False
-        return False
-
-
-    def code(self, board):
-        """
-        Code les moves
-        """
-        direction = 1
-        if self.y2 > self.y1:
-            if board.board[self.x2][self.y2] == Empty:
-                direction = 0
-            else:
-                direction = 3
-        if self.y2 < self.y1:
-            if board.board[self.x2][self.y2] == Empty:
-                direction = 2
-            else:
-                direction = 4
-        if self.color == White:
-            return 5* (Dy * self.x1 + self.y1) + direction
-        else:
-            return 5*Dx*Dy+5*(Dy*self.x1 + self.y1) + direction
-'''
 if __name__=="__main__":
-    res = 0
-
-    board = Board()
-    res += board.RAVE_vs_UCB(nb_coups = 1000, verbose=True)
-    print(board.board)
-
-    print(res)
-
-
-
+    print('play_functions')
