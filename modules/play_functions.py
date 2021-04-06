@@ -5,9 +5,8 @@ Algorithmes MCTS, cours de Tristan CAZENAVE (https://www.lamsade.dauphine.fr/~ca
 ##Importations
 
 import numpy as np
-import random
 import copy
-import tqdm
+import sys
 ##Constantes
 
 '''
@@ -122,6 +121,8 @@ Grave
 def GRAVE(Table, board, played, tref):
     if (board.terminal()):
         return board.score()
+    if len(played) >= sys.getrecursionlimit()-3:
+      return board.score()
     t = Table.look(board)
     if t != None:
         tr = tref
@@ -192,6 +193,8 @@ RAVE
 def RAVE(Table, board, played):
     if (board.terminal()):
         return board.score()
+    if len(played) >= sys.getrecursionlimit()-3:
+      return board.score()
     t = Table.look(board)
     if t!=None:
         bestValue = -10000000.0
@@ -264,9 +267,11 @@ def BestMoveRAVE(Table, board, n):
 UCT
 """
 
-def UCT(Table, board):
+def UCT(Table, board, depth=0):
     if board.terminal():
         return board.score()
+    if depth >= sys.getrecursionlimit()-3:
+      return board.score()
     t = Table.look(board)
     if t != None:
         bestValue = -10000000.0
@@ -283,7 +288,7 @@ def UCT(Table, board):
                 bestValue = val
                 best = i
         board.play(moves[best])
-        res = UCT(Table, board)
+        res = UCT(Table, board, depth+1)
         t[0] += 1
         t[1][best] += 1
         t[2][best] += res

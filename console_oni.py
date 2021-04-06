@@ -6,11 +6,11 @@ Created on Tue Apr  6 14:53:59 2021
 """
 
 
-import sys
+
 from modules import onitama as GAME
 from modules import play_functions as PLAYERS
 from modules import transposition_table
-import time
+
 # import copy
 
 ##Constantes
@@ -122,7 +122,7 @@ if __name__ == "__main__":
     Console bot vs bot
     """
     if True:
-      nb_coups = 10
+      nb_coups = 1000
       
       # if player function requires a transposition table, it must be passed to the main function as a kwarg Table = t_table
       # main_console()
@@ -133,8 +133,9 @@ if __name__ == "__main__":
       # bot1_kwargs = {'Table': T1,'n': nb_coups}
       
       # White player
-      bot1 = PLAYERS.SequentialHalving
+      bot1 = PLAYERS.same_move
       bot1_kwargs = {'Table': T1, 'n': nb_coups}
+      bot1_kwargs  = {}
       
       # Black player
       bot2 = PLAYERS.SHUSS
