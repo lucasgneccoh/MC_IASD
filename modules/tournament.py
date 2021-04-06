@@ -35,7 +35,7 @@ class Bot:
 def bot1_vs_bot2(white_bot, black_bot, verbose = False):
     board= GAME.Board()
     while (True):
-        moves = board.legalMoves()
+        # moves = board.legalMoves()
         if board.terminal():
             # if board.score() == 1.0:
             return board.score()

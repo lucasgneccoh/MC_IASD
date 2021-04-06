@@ -19,6 +19,10 @@ ref_values = [Empty, White, Black, WhiteK, BlackK]
 
 Dx = 5
 Dy = 5
+piece_2_char = {Empty: '-', White: 'w', Black: 'b', WhiteK: 'W', BlackK: 'B'}
+def char_piece(x):
+  return piece_2_char[x]
+  
 
 
 ONITAMA_MAX_MOVES_CARD = 4
@@ -36,6 +40,8 @@ All possible actions considering state, is capture, etc:
 '''
 MaxTotalLegalMoves = 2 * Dx * Dy * ONITAMA_CARDS_IN_GAME * ONITAMA_MAX_MOVES_CARD * 2 * 2
 
+# print(MaxTotalLegalMoves)
+# print(MaxLegalMoves)
 
 """
 List of all cards
@@ -46,7 +52,7 @@ cards = {"Rooster":[(-1,1),(0,1), (0,-1),(1,-1)],
 "Boar":[(0,-1), (-1,0),(0,1)],
 "Dragon":[(-1,-2), (-1,2),(1,-1),(1,1)],
 "Monkey":[(-1,-1), (-1,1),(1,-1),(1,1)],
-"Elefant":[(-1,-1), (-1,1),(0,-1),(0,1)],
+"Elephant":[(-1,-1), (-1,1),(0,-1),(0,1)],
 "Rabbit":[(1,-1), (-1,1),(0,2)],
 "Mantis":[(-1,-1), (-1,1),(1,0)],
 "Horse":[(0,-1), (-1,0),(1,0)],
@@ -219,6 +225,18 @@ class Board(object):
             n = random.randint(0, len(moves) - 1)
             played += [moves[n].code(self)]
             self.play(moves[n])
+            
+    
+    def __repr__(self):
+      text = '    ' + '{0:#^14}'.format('_Black_')
+      text += '\n ' + 'y | ' + '  '.join(map(str, range(Dy)))
+      text += '\nx ' + '-'*16
+      for i in range(Dx):
+        text += '\n ' + str(i) + ' | ' + '  '.join([char_piece(x) for x in self.board[i,:]])
+      
+      text += '\n ' + '   ' + '{0:#^14}'.format('_White_')
+      return text
+      
 
 """
 Move class
@@ -246,12 +264,25 @@ class Move(object):
 
     def valid(self, board):
         # print(self.x1, self.y1, self.x2, self.y2)
+        if board.board[self.x1][self.y1] * self.color <= 0:
+          return False
+          
         if self.x2 >= Dx or self.y2 >= Dy or self.x2 < 0 or self.y2 < 0:
             return False
         if board.board[self.x2][self.y2] * self.color > 0:
             # self.board[i][j] * self.turn > 0
             return False
-        return True
+        
+        # Lastly,check if card allows this move
+        for move_card in cards[board.chosen_cards[self.card]]:
+          if self.color==White:
+            x2, y2 = self.x1 + move_card[0], self.y1 + move_card[1]
+          else:
+            x2, y2 = self.x1 - move_card[0], self.y1 - move_card[1]
+          
+          if self.x2 == x2 and self.y2 == y2: return True
+        
+        return False
     
     def move_index_in_card(self, board):
         if self.color == White:
@@ -284,10 +315,8 @@ class Move(object):
         return 2000*color + 1000*is_sensei + 500*captures + 125*move_index + 25*card + init_pos
         
     def __repr__(self):
-        print("Card {}: ({},{}) -> ({},{})".format(self.card, self.x1, self.y1, self.x2, self.y2))
+        return "Card {}: ({},{}) -> ({},{})".format(self.card, self.x1, self.y1, self.x2, self.y2)
 
-# test = Board()
-# print(test.board)
 
 def test_card(key):
     
@@ -298,8 +327,6 @@ def test_card(key):
         mat[move[0] + 2, move[1] + 2] = 1
     print(mat)
 
-# test_card("Ochse")
-# print(np.random.choice(list(cards.keys()), size = 5, replace= False))
 
 def flat (board, n):
     moves = board.legalMoves ()
@@ -383,5 +410,5 @@ main
 
 if __name__ == "__main__":
     obj = Board()
-    print(obj.board)
-    obj.playout()    
+    print(obj)
+    # obj.playout()    

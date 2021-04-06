@@ -11,31 +11,10 @@ import tqdm
 ##Constantes
 
 '''
-This should work for any game!
+TODO: This should work for any game!,
+Players should be somehow read from the game, not hardcoded here
 '''
 White, Empty, Black = 1, 0, -1
-
-"""
-HashTable pour les tables de transposition
-"""
-
-# hashTable = []
-# for k in range (3):
-#     l = []
-#     for i in range (Dx):
-#         l1 = []
-#         for j in range (Dy):
-#             l1.append (random.randint (0, 2 ** 64))
-#         l.append (l1)
-#     hashTable.append (l)
-# hashTurn = random.randint (0, 2 ** 64)
-
-"""
-Fonctions utiles hors classes pour les algorithmes
-"""
-
-
-
 
 
 """
@@ -51,12 +30,14 @@ def SHUSS(Table, board, n, c = 128):
     nbplayouts = [0.0 for x in range(Table.MaxTotalLegalMoves)]
     nbwins = [0.0 for x in range(Table.MaxTotalLegalMoves)]
     while len(moves) > 1:
-        for m in moves:
-            for i in range(int(n / (len(moves) * np.log2(total)))):
+        M = int(n / (len(moves) * np.log2(total)))
+        for m in moves:          
+            for i in range(max(M,1)):
                 b = copy.deepcopy(board)
                 b.play(m)
                 played = [m.code(board)]
-                res = GRAVE(Table, b, played, t)
+                res = GRAVE(Table, b, played, t) 
+                # Doesn't GRAVE do the updateAMAF already?
                 Table.updateAMAF(t, played, res)
                 nbplayouts[m.code(board)] += 1
                 if board.turn == White:
@@ -76,10 +57,13 @@ def bestHalfSHUSS(t, board, moves, nbwins, nbplayouts, c = 128, MaxTotalLegalMov
         for m in moves:
             code = m.code(board)
             if notused[code]:
+                                
                 AMAF = t[4][code] / t[3][code]
                 if board.turn == Black:
                     AMAF = 1 - AMAF
-                mu = nbwins[code]/nbplayouts[code] + c*AMAF/nbplayouts[code]
+                bias = AMAF/nbplayouts[code]
+                
+                mu = nbwins[code]/nbplayouts[code] + c*bias
                 if mu > best:
                     best = mu
                     bestMove = m
@@ -98,8 +82,9 @@ def SequentialHalving(Table, board, n):
     nbplayouts = [0.0 for x in range(Table.MaxTotalLegalMoves)]
     nbwins = [0.0 for x in range(Table.MaxTotalLegalMoves)]
     while len(moves) > 1:
+        M = int(n / (len(moves)*np.log2(total)))
         for m in moves:
-            for i in range(int(n / (len(moves)*np.log2(total)))):
+            for i in range(max(M,1)):
                 b = copy.deepcopy(board)
                 b.play(m)
                 res = UCT(Table, b)
@@ -189,7 +174,7 @@ def BestMoveGRAVE(Table, board, n):
     for i in range(n):
         t = Table.look(board)
         b1 = copy.deepcopy(board)
-        res = GRAVE(Table, b1, [], t)
+        _ = GRAVE(Table, b1, [], t)
     t = Table.look(board)
     moves = board.legalMoves()
     best = moves[0]
@@ -382,7 +367,19 @@ def UCB (board, n):
             bestMove = moves [m]
     return bestMove
 
+"""
+Random player
+"""
 
+def random_bot(board):
+    return np.random.choice(board.legalMoves ())
+
+"""
+Same move player
+"""
+
+def same_move(board):
+    return board.legalMoves ()[0]
 
 '''
 """
