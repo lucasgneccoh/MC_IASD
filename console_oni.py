@@ -133,9 +133,9 @@ if __name__ == "__main__":
       # bot1_kwargs = {'Table': T1,'n': nb_coups}
       
       # White player
-      bot1 = PLAYERS.same_move
+      bot1 = PLAYERS.BestMoveGRAVE
       bot1_kwargs = {'Table': T1, 'n': nb_coups}
-      bot1_kwargs  = {}
+      
       
       # Black player
       bot2 = PLAYERS.SHUSS

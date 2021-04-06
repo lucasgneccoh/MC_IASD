@@ -16,6 +16,8 @@ Players should be somehow read from the game, not hardcoded here
 White, Empty, Black = 1, 0, -1
 
 
+MAX_RECURSION_DELTA = 100 
+
 """
 Shuss
 """
@@ -121,7 +123,7 @@ Grave
 def GRAVE(Table, board, played, tref):
     if (board.terminal()):
         return board.score()
-    if len(played) >= sys.getrecursionlimit()-3:
+    if len(played) >= sys.getrecursionlimit()-MAX_RECURSION_DELTA:
       return board.score()
     t = Table.look(board)
     if t != None:
@@ -193,7 +195,7 @@ RAVE
 def RAVE(Table, board, played):
     if (board.terminal()):
         return board.score()
-    if len(played) >= sys.getrecursionlimit()-3:
+    if len(played) >= sys.getrecursionlimit()-MAX_RECURSION_DELTA :
       return board.score()
     t = Table.look(board)
     if t!=None:
@@ -270,7 +272,7 @@ UCT
 def UCT(Table, board, depth=0):
     if board.terminal():
         return board.score()
-    if depth >= sys.getrecursionlimit()-3:
+    if depth >= sys.getrecursionlimit()-MAX_RECURSION_DELTA :
       return board.score()
     t = Table.look(board)
     if t != None:
