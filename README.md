@@ -11,7 +11,7 @@ The script `play_functions.py` contains the different algorithms that play the g
 If you want to play against one of the algorithms, launch the script `GUI_oni.py`. The parameters you can pass to this script are
 
 ```
-  --enemy    Select the enemy AI to play against from the options available (--help see them)
+  --enemy    Select the enemy AI to play against from the options available (use --help to see them)
   --n        Budget for the AI
   --play_as  red or blue (red plays first)
 ```
