@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 import play_functions as PLAYERS
 import onitama as GAME
@@ -6,8 +5,8 @@ from itertools import combinations
 import transposition_table as T
 import time
 import elo
-import matplotlib.pyplot as plt
 from random import shuffle
+import os
 
 pd.options.mode.chained_assignment = None  # default='warn'
 
@@ -19,6 +18,8 @@ T.T_Table.MaxLegalMoves = GAME.ONITAMA_CARDS_IN_GAME * GAME.ONITAMA_MAX_MOVES_CA
 
 T.T_Table.MaxTotalLegalMoves = 2 * GAME.Dx * GAME.Dy * GAME.ONITAMA_CARDS_IN_GAME * GAME.ONITAMA_MAX_MOVES_CARD * 2 * 2
 
+T.T_Table.White = GAME.White
+T.T_Table.Black = GAME.Black
 
 
 class Bot:
@@ -108,7 +109,7 @@ Fichier bots.csv avec les elos et les wins
 """
 
 try:
-    df = pd.read_csv("data/bots.csv", index_col="bot")
+    df = pd.read_csv("../data/bots.csv", index_col="bot")
     for b in all_bots:
         if not b in df.columns:
             raise Exception('New bot. Reseting table')
@@ -117,16 +118,22 @@ except:
     for i, bot in enumerate(all_bots):
         df.loc[i] = [bot.name, 1200, 0] + ["0/0"]*len(all_bots)
     df.set_index("bot", inplace=True)
-    df.to_csv("data/bots.csv")
+    if not os.path.exists('../data/bots.csv'):
+      with open('../data/bots.csv') as f:
+        f.close()
+    df.to_csv("../data/bots.csv")
 
 """
 Fichier matches_history.csv avec l'historique des parties
 """
 
 try:
-    df_hist = pd.read_csv("data/matches_history.csv")    
+    df_hist = pd.read_csv("../data/matches_history.csv")    
 except:
     df_hist = pd.DataFrame(columns = ["White", "Black", "Winner", "Elo White Before", "Elo Black Before", "Elo White After","Elo Black After"])
+    if not os.path.exists('../data/matches_history.csv'):
+      with open('../data/matches_history.csv') as f:
+        f.close()
     df_hist.to_csv("data/matches_history.csv")
 
 
@@ -134,48 +141,54 @@ except:
 """
 main
 """
-
+VERBOSE = True
+ROUNDS = 2
 all_matches = list(combinations(all_bots, 2))
 
 simple_table = pd.DataFrame(columns = ['white_bot','black_bot', 'score','time'])
 counter = 0
-for round in range(2):
+for round in range(ROUNDS):
     shuffle(all_matches)
-    print("-"*20)
-    print("ROUND {}".format(round))
+    if VERBOSE:
+      print("-"*20)
+      print("ROUND {}".format(round))
     for i in range(len(all_matches)):
-        print("MATCH {} on {}".format(i + 1, len(all_matches)))
         white_bot, black_bot = all_matches[i][0], all_matches[i][1]
-        print("*"*20)
-        print("MATCH {} VS {}".format(white_bot.name, black_bot.name))
+        if VERBOSE: 
+          print("MATCH {} on {}".format(i + 1, len(all_matches)))        
+          print("*"*20)
+          print("MATCH {} VS {}".format(white_bot.name, black_bot.name))
         start = time.process_time()
         res = bot1_vs_bot2(white_bot = white_bot, black_bot = black_bot, verbose = False)
         
         simple_table.loc[counter] = [white_bot.name, black_bot.name, res, time.process_time()-start]
         counter += 1
-        print("Winner: {}".format(white_bot.name if res >0.5 else black_bot.name))
+        if VERBOSE: 
+          print("Winner: {}".format(white_bot.name if res >0.5 else black_bot.name))
         
         hist = elo.updateTable(df, df_hist, white_bot, black_bot, res)
         df_hist = df_hist.append(hist, ignore_index = True)
-        df.to_csv("data/bots.csv")
-        df_hist.to_csv("data/matches_history.csv", index = False)
+        df.to_csv("../data/bots.csv")
+        df_hist.to_csv("../data/matches_history.csv", index = False)
 
         white_bot, black_bot = all_matches[i][1], all_matches[i][0]
         # print("*"*20)
-        print("SWITCHING SIDES")
+        if VERBOSE: 
+          print("SWITCHING SIDES")
         start = time.process_time()
         res = bot1_vs_bot2(white_bot = white_bot, black_bot = black_bot, verbose = False)
         
         simple_table.loc[counter] = [white_bot.name, black_bot.name, res, time.process_time()-start]
         counter += 1
-        print("Winner: {}".format(white_bot.name if res >0.5 else black_bot.name))
+        if VERBOSE: 
+          print("Winner: {}".format(white_bot.name if res >0.5 else black_bot.name))
       
         hist = elo.updateTable(df, df_hist, white_bot, black_bot, res)
         df_hist = df_hist.append(hist, ignore_index = True)
-        df.to_csv("data/bots.csv")
-        df_hist.to_csv("data/matches_history.csv", index = False)
+        df.to_csv("../data/bots.csv")
+        df_hist.to_csv("../data/matches_history.csv", index = False)
 
-simple_table.to_csv("data/simple_table.csv", index = False)
+simple_table.to_csv("../data/simple_table.csv", index = False)
 
 
 
