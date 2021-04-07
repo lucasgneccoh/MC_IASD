@@ -128,34 +128,46 @@ Fichier bots.csv avec les elos et les wins
 """
 
 path_b = os.path.join(BASE_PATH,"bots.csv")
-try:
-    df = pd.read_csv(path_b, index_col="bot")
-    for b in all_bots:
-        if not b in df.columns:
-            raise Exception('New bot. Reseting table')
-except:
-    df = pd.DataFrame(columns = ["bot", "elo", "nb_played"] + [bot.name for bot in all_bots])
-    for i, bot in enumerate(all_bots):
-        df.loc[i] = [bot.name, 1200, 0] + ["0/0"]*len(all_bots)
-    df.set_index("bot", inplace=True)
-    if not os.path.exists(path_b):
-      with open(path_b,'w+') as f:
-        f.close()
-    df.to_csv(path_b)
+if not os.path.exists(path_b):
+  with open(path_b,'w+') as f:
+    f.close()
+  df = pd.DataFrame(columns = ["bot", "elo", "nb_played"] + [bot.name for bot in all_bots])
+  for i, bot in enumerate(all_bots):
+      df.loc[i] = [bot.name, 1200, 0] + ["0/0"]*len(all_bots)
+  df.set_index("bot", inplace=True)
+  if not os.path.exists(path_b):
+    with open(path_b,'w+') as f:
+      f.close()
+  df.to_csv(path_b)
+else:
+  try:
+      df = pd.read_csv(path_b, index_col="bot")
+      for b in all_bots:
+          if not b in df.columns:
+              raise Exception('New bot. Reseting table')
+  except:
+      df = pd.DataFrame(columns = ["bot", "elo", "nb_played"] + [bot.name for bot in all_bots])
+      for i, bot in enumerate(all_bots):
+          df.loc[i] = [bot.name, 1200, 0] + ["0/0"]*len(all_bots)
+      df.set_index("bot", inplace=True)
+      df.to_csv(path_b)
     
 
 """
 Fichier matches_history.csv avec l'historique des parties
 """
 path_h = os.path.join(BASE_PATH,"matches_history.csv")
-try:
-    df_hist = pd.read_csv(path_h)    
-except:
-    df_hist = pd.DataFrame(columns = ["datetime", "White", "Black", "Winner", "Elo White Before", "Elo Black Before", "Elo White After","Elo Black After"])
-    if not os.path.exists(path_h):
-      with open(path_h, 'w+') as f:
-        f.close()
-    df_hist.to_csv(path_h)
+if not os.path.exists(path_h):
+  with open(path_h, 'w+') as f:
+    f.close()
+  df_hist = pd.DataFrame(columns = ["datetime", "White", "Black", "Winner", "Elo White Before", "Elo Black Before", "Elo White After","Elo Black After"])
+  df_hist.to_csv(path_h)
+else:
+  try:
+      df_hist = pd.read_csv(path_h)    
+  except:
+      df_hist = pd.DataFrame(columns = ["datetime", "White", "Black", "Winner", "Elo White Before", "Elo Black Before", "Elo White After","Elo Black After"])
+      df_hist.to_csv(path_h)
 
 
 
