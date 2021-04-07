@@ -10,10 +10,12 @@ The script `play_functions.py` contains the different algorithms that play the g
 # Use GUI to play the game
 If you want to play against one of the algorithms, launch the script `GUI_oni.py`. The parameters you can pass to this script are
 
+```
   --enemy    Select the enemy AI to play against from the options available (--help see them)
   --n        Budget for the AI
   --play_as  red or blue (red plays first)
- 
+```
+
 # Compare the different algorithms
 The script `modules\tournament.py` is designed to run a tournament between the bots. The results are saved in the `data` folder.
 
