@@ -9,8 +9,21 @@ import sys
 from modules import onitama as GAME
 from modules import play_functions as PLAYERS
 from modules import transposition_table
-import random
-# import copy
+from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
+
+def parseInputs():
+  parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
+  bots = PLAYERS.bots
+  bot_options = list(bots.keys())
+  line = ', '.join(bot_options)
+  first_bot = bot_options[0]
+  parser.add_argument("--enemy", help="Name of the adversary AI. Options are: " + line, default = first_bot)
+  parser.add_argument("--n", help="Budget given to the bots. Corresponds to the number of playouts they do before taking a move", default = 500)
+  parser.add_argument("--play_as", help="Side you want to play. Options are red or blue", default = "red")
+  args = parser.parse_args()
+  return args
+
+
 
 ##Constantes
 '''
@@ -40,7 +53,9 @@ SQ_SIZE = HEIGHT // DIMENSION
 SHRINE_PAD = 5
 PION_H_PAD = 20
 
-MAX_FPS = 20
+MAX_FPS = 15
+
+FONT_SIZE = 22
 
 IMAGES_background = p.transform.scale(p.image.load("images/board_good_size_redone.png"), (WIDTH_BOARD, HEIGHT))
 
@@ -68,7 +83,8 @@ color_orange = p.Color(255, 195, 117, a=125)
 color_white = p.Color("white")
 color_highlight = p.Color(210, 138, 255, a=125)
 color_selected = p.Color(125, 255, 136, a=125)
-color_cards_background = p.Color(255, 141, 48, a=125)
+color_text_back = p.Color(245, 81, 185, a=125)
+color_text = p.Color(7, 7, 26, a=125)
 color_cards_background = p.Color(148, 25, 16, a=125) # Burgundy
 # For the board
 colors = [color_white, color_orange]
@@ -144,8 +160,11 @@ def highlight_moves(gs, board_cells, first_piece_selected, card_selected):
     refresh_colors_board(board_cells, first_piece_selected)
     x1, y1 = first_piece_selected
     moves_card = GAME.cards[gs.chosen_cards[card_board]]
-    for move_card in moves_card:                              
-      x2, y2 = x1 + move_card[0], y1 + move_card[1]
+    for move_card in moves_card:
+      if gs.turn==GAME.White:
+        x2, y2 = x1 + move_card[0], y1 + move_card[1]
+      else:
+        x2, y2 = x1 - move_card[0], y1 - move_card[1]
       if is_on_board(x2, y2) and not is_on_own_piece(gs, x2, y2):
         # print(x2, ', ', y2)
         board_cells[x2][y2].fill(color_highlight)
@@ -181,6 +200,17 @@ def drawPieces(screen, board, board_cells, colors=colors):
         for c in range(DIMENSION):
             
             piece = board[r][c]
+            
+            # First cover with blank
+            blank = p.Surface((SQ_SIZE, SQ_SIZE))
+            blank.fill(board_cells[r][c].get_at((1,1)))
+            board_cells[r][c].blit(blank, p.Rect( 0,  0, SQ_SIZE, SQ_SIZE))
+            if r==0 and c==2:
+              board_cells[r][c].blit(IMAGES_shrine_blue, p.Rect(SHRINE_PAD, SHRINE_PAD, SQ_SIZE-SHRINE_PAD, SQ_SIZE-SHRINE_PAD))
+            if r==4 and c==2:
+              board_cells[r][c].blit(IMAGES_shrine_red, p.Rect(5, 5, SQ_SIZE-5, SQ_SIZE-5))
+            
+            # Now put pieces
             if piece != GAME.Empty:
               if r==0 and c==2:
                 board_cells[r][c].blit(IMAGES_shrine_blue, p.Rect(SHRINE_PAD, SHRINE_PAD, SQ_SIZE-SHRINE_PAD, SQ_SIZE-SHRINE_PAD))
@@ -188,15 +218,9 @@ def drawPieces(screen, board, board_cells, colors=colors):
                 board_cells[r][c].blit(IMAGES_shrine_red, p.Rect(5, 5, SQ_SIZE-5, SQ_SIZE-5))
               img = piece_imgs[piece]
               board_cells[r][c].blit(img, p.Rect( 30,  10, SQ_SIZE, SQ_SIZE))
-            else:
+            
               
-              blank = p.Surface((SQ_SIZE, SQ_SIZE))
-              blank.fill(board_cells[r][c].get_at((1,1)))
-              board_cells[r][c].blit(blank, p.Rect( 0,  0, SQ_SIZE, SQ_SIZE))
-              if r==0 and c==2:
-                board_cells[r][c].blit(IMAGES_shrine_blue, p.Rect(SHRINE_PAD, SHRINE_PAD, SQ_SIZE-SHRINE_PAD, SQ_SIZE-SHRINE_PAD))
-              if r==4 and c==2:
-                board_cells[r][c].blit(IMAGES_shrine_red, p.Rect(5, 5, SQ_SIZE-5, SQ_SIZE-5))
+              
               
 
 def drawCards(screen, screen_cards_ind_frame, screen_cards_ind_inner, board):
@@ -234,6 +258,9 @@ def main(**kwargs):
     """
     # Get needed attributes
     nb_coups = kwargs['nb_coups']
+    enemy = kwargs['enemy']
+    enemy_name = kwargs['enemy_name']
+    human = kwargs['play_as']
    
     # Start pygame
     
@@ -245,9 +272,10 @@ def main(**kwargs):
     '''
     Define font for the end game message here
     '''
-    available_fonts = p.font.get_fonts()
-    random_font = available_fonts[random.randint(0, len(available_fonts)-1)]
-    myfont = p.font.SysFont(random_font, 48)
+    # available_fonts = p.font.get_fonts()
+    # random_font = available_fonts[random.randint(0, len(available_fonts)-1)]
+    
+    myfont = p.font.SysFont('consolas', FONT_SIZE)
     screen = p.display.set_mode((WIDTH, HEIGHT))  
     
     # Camera rectangles for sections of  the canvas
@@ -264,9 +292,7 @@ def main(**kwargs):
     delta_h = CARD_HEIGHT + 2*PAD
     separation = (HEIGHT - 5*CARD_HEIGHT - 10*PAD)//2
     height = 0
-    '''
-    Why arent rectangles padded correctly?
-    '''
+
     for i in [0,1]:
       screen_cards_ind_frame[i] = screen_cards.subsurface(
         p.Rect(0, height, CARD_WIDTH+2*PAD, CARD_HEIGHT+2*PAD))
@@ -321,18 +347,29 @@ def main(**kwargs):
     
     running = True    
     block_game = False
+    
+    score = {'human':0, 'ai':0}
+    drawGameState(screen_board, screen_cards, screen_cards_ind_frame, screen_cards_ind_inner, gs, board_cells)
     try:        
         while running:
           if block_game:
             '''
-            Game is over, waiting for user to close window
+            Game is over, waiting for user to close window or to click on a srhine to pick new color to play
             '''
             # render text
-            msg = "{} is the winner!".format('Red' if gs.score()>0.5 else 'Blue')
-            label = myfont.render(msg, 1, (5, 34, 250))
-            text_width = label.get_width()            
-            pos = (WIDTH_BOARD-text_width)//2
-            screen.blit(label, (pos, HEIGHT//2))
+            msgs = []
+            msgs.append("{} is the winner!".format('Red' if gs.score()>0.5 else 'Blue'))
+            
+            msgs.append("Human: {}   -    {}: {}".format(score['human'],enemy_name, score['ai']))
+            msgs.append("Click on shrine to play again with that color")
+            num_lines = len(msgs)
+            for i, msg in enumerate(msgs):
+              label = myfont.render('{: ^50}'.format(msg), 1, color_text, color_text_back)
+              text_w = label.get_width()
+              
+              text_h = label.get_height()
+              pos = (WIDTH_BOARD-text_w)//2
+              screen.blit(label, (pos, HEIGHT//2 - (num_lines//2 - i)*text_h))
             p.display.update()
             
             for e in p.event.get():
@@ -341,8 +378,32 @@ def main(**kwargs):
                   # print("Exiting")
                   p.quit()
                   sys.exit()
+              elif e.type == p.MOUSEBUTTONDOWN:
+                  # Detect if it was on a shrine
+                  location = p.mouse.get_pos() ##(x,y) location of mouse
+                  # print(location)
+                  col = location[0]//SQ_SIZE
+                  row = location[1]//SQ_SIZE
+                  if row == 0 and col ==2:
+                    human = GAME.Black
+                    block_game = False
+                  if row == 4 and col == 2:
+                    human = GAME.White
+                    block_game = False
+                  # Player clicked on a shrine, must reset game to start over
+                  if block_game==False:
+                    gs = GAME.Board()                  
+                    first_piece_selected = None
+                    card_selected = None
+                    restart_board_colors(board_cells)
+                    drawGameState(screen_board, screen_cards, screen_cards_ind_frame, screen_cards_ind_inner, gs, board_cells)
+                    clock.tick(MAX_FPS)
+                    
+                    p.display.flip()
+                  
           else:
-            if gs.turn == White:
+            # Game is going
+            if gs.turn == human:
                 for e in p.event.get():
                     if e.type == p.QUIT:                    
                         running = False
@@ -366,6 +427,7 @@ def main(**kwargs):
                           
                           # Check if it belongs to player
                           if (gs.turn==GAME.White and not card_selected in [3,4]) or (gs.turn==GAME.Black and not card_selected in [0,1]):
+                            card_selected = None
                             continue
                           
                           #Highlight the card
@@ -428,8 +490,10 @@ def main(**kwargs):
                                 # print(gs)
                                 gs.play(move)
                                 if gs.terminal():
-                                  # print("END")
+                                  # print("END")                                  
                                   block_game = True
+                                  # Update score: human wins
+                                  score['human']+=1
                                   
                                 restart_board_colors(board_cells)
                                 first_piece_selected = None
@@ -442,14 +506,24 @@ def main(**kwargs):
                                        
             else:
                 # Bot plays
+                label = myfont.render('{: ^50}'.format(enemy_name+' is thinking...'), 1, color_text, color_text_back)
+                text_w = label.get_width()
+                
+                text_h = label.get_height()
+                pos = (WIDTH_BOARD-text_w)//2
+                screen.blit(label, (pos, HEIGHT//2))
+                p.display.update()
                 T = transposition_table.T_Table() 
-                move = PLAYERS.SHUSS(T, gs, nb_coups)
+                # For the moment all bots recieve Table, board, n
+                move = enemy(T, gs, nb_coups)
                 gs.play (move)
                 board_cells[move.x1][move.y1].fill(color_selected)
                 board_cells[move.x2][move.y2].fill(color_highlight)
                 if gs.terminal():
                   # print("END")
                   block_game=True
+                  # Update score: ai wins
+                  score['ai']+=1
                 
             
             drawGameState(screen_board, screen_cards, screen_cards_ind_frame, screen_cards_ind_inner, gs, board_cells)
@@ -477,7 +551,17 @@ if __name__ == "__main__":
     GUI human vs bot
     """
     if True:
-      main(nb_coups = 10)
+      '''
+Define bots dictionary here
+'''
+      bots = PLAYERS.bots
+      args = parseInputs()
+      enemy = bots[args.enemy]
+      enemy_name = args.enemy
+      n = int(args.n)
+      play_as = GAME.White if args.play_as == "red" else GAME.Black
+      print(args)
+      main(nb_coups = n, enemy = enemy, play_as = play_as, enemy_name = enemy_name)
   
   
     

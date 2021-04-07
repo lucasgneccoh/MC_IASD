@@ -393,5 +393,18 @@ def same_move(Table, board):
     return board.legalMoves ()[0]
 
 
+'''
+Define a dict of bots for other modules to use
+'''
+
+bots = {'UCT': BestMoveUCT,
+        'GRAVE': BestMoveGRAVE,
+        'RAVE': BestMoveRAVE,
+        'SHUSS': SHUSS,
+        'SH': SequentialHalving,
+        'Flat MC': flat,
+        'Random': random_bot,
+        'Dumb': same_move}
+
 if __name__=="__main__":
     print('play_functions')

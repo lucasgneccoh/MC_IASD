@@ -21,7 +21,7 @@ def updateElo(W, bot1, bot2, df):
     df["elo"][bot1.name] = int(df["elo"][bot1.name] + K(df["nb_played"][bot1.name])*(W - p(D)))
     df["elo"][bot2.name] = int(df["elo"][bot2.name] + K(df["nb_played"][bot2.name])*(1.0 - W - p(-D)))
     
-def updateTable(df, df_hist, white_bot, black_bot, res):
+def updateTable(df, df_hist, white_bot, black_bot, res, dt_string):
     try:
         hist = {"White":white_bot.name, "Black":black_bot.name,
         "Elo White Before":df["elo"][white_bot.name],
@@ -29,10 +29,8 @@ def updateTable(df, df_hist, white_bot, black_bot, res):
     except KeyError as e:
         print("A bot was not found in the history table")
         raise e
-        
-            
-        
-
+    
+    hist['datetime'] = dt_string
     if res == 1.0:
         list_res = df[black_bot.name][white_bot.name].split("/")
         list_res[0] = int(list_res[0])
