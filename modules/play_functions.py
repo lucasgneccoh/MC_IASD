@@ -7,17 +7,8 @@ Algorithmes MCTS, cours de Tristan CAZENAVE (https://www.lamsade.dauphine.fr/~ca
 import numpy as np
 import copy
 import sys
-from tqdm import tqdm
 
 ##Constantes
-
-'''
-TODO: This should work for any game!,
-Players should be somehow read from the game, not hardcoded here
-'''
-White, Empty, Black = 1, 0, -1
-
-
 MAX_RECURSION_DELTA = 100 
 
 """
@@ -25,13 +16,18 @@ Shuss
 """
 
 def SHUSS(Table, board, n, c = 128):
+    '''
+    Take game information from the Transposition Table
+    '''
+    White, Black = Table.__class__.White, Table.__class__.Black
+    MTLM = Table.__class__.MaxTotalLegalMoves
     
     Table.addAMAF(board)
     t = Table.look(board)
     moves = board.legalMoves()
     total = len(moves)
-    nbplayouts = [0.0 for x in range(Table.MaxTotalLegalMoves)]
-    nbwins = [0.0 for x in range(Table.MaxTotalLegalMoves)]
+    nbplayouts = [0.0 for x in range(MTLM)]
+    nbwins = [0.0 for x in range(MTLM)]
     
     while len(moves) > 1:
         M = int(n / (len(moves) * np.log2(total)))
@@ -48,10 +44,10 @@ def SHUSS(Table, board, n, c = 128):
                     nbwins[m.code(board)] += res
                 else:
                     nbwins[m.code(board)] += 1.0 - res
-        moves = bestHalfSHUSS(t, board, moves, nbwins, nbplayouts, c, Table.MaxTotalLegalMoves)
+        moves = bestHalfSHUSS(t, board, moves, nbwins, nbplayouts, c, MTLM , Black)
     return moves[0]
 
-def bestHalfSHUSS(t, board, moves, nbwins, nbplayouts, c = 128, MaxTotalLegalMoves=None):
+def bestHalfSHUSS(t, board, moves, nbwins, nbplayouts, c = 128, MaxTotalLegalMoves=None, Black = None):
     half = []
     notused = [True for x in range(MaxTotalLegalMoves)] 
     # c = 128 ##initialement 128
@@ -80,11 +76,15 @@ SequentialHalving
 """
 
 def SequentialHalving(Table, board, n): 
-    
+    '''
+    Take game information from the Transposition Table
+    '''
+    MTLM = Table.__class__.MaxTotalLegalMoves
+  
     moves = board.legalMoves()
     total = len(moves)
-    nbplayouts = [0.0 for x in range(Table.MaxTotalLegalMoves)]
-    nbwins = [0.0 for x in range(Table.MaxTotalLegalMoves)]
+    nbplayouts = [0.0 for x in range(MTLM)]
+    nbwins = [0.0 for x in range(MTLM)]
     while len(moves) > 1:
         M = int(n / (len(moves)*np.log2(total)))
         for m in moves:
@@ -93,11 +93,11 @@ def SequentialHalving(Table, board, n):
                 b.play(m)
                 res = UCT(Table, b)
                 nbplayouts[m.code(board)] += 1
-                if board.turn == White:
+                if board.turn == Table.__class__.White:
                     nbwins[m.code(board)] += res
                 else:
                     nbwins[m.code(board)] += 1.0 - res
-        moves = bestHalf(board, moves, nbwins, nbplayouts, Table.MaxTotalLegalMoves)
+        moves = bestHalf(board, moves, nbwins, nbplayouts, MTLM)
     return moves[0]
 
 def bestHalf(board, moves, nbwins, nbplayouts, MaxTotalLegalMoves):
@@ -124,6 +124,7 @@ Grave
 """
 
 def GRAVE(Table, board, played, tref):
+    
     if (board.terminal()):
         return board.score()
     if len(played) >= sys.getrecursionlimit()-MAX_RECURSION_DELTA:
@@ -145,10 +146,10 @@ def GRAVE(Table, board, played, tref):
                 Q = 1
                 if t[1][i] > 0:
                     Q = t[2][i] / t[1][i]
-                    if board.turn == Black:
+                    if board.turn == Table.__class__.Black:
                         Q = 1 - Q
                 AMAF = tr[4][code] / tr[3][code]
-                if board.turn == Black:
+                if board.turn == Table.__class__.Black:
                     AMAF = 1 - AMAF
                 val = (1.0 - beta) * Q + beta * AMAF
             if val > bestValue:
@@ -215,10 +216,10 @@ def RAVE(Table, board, played):
                 Q = 1
                 if t[1][i] > 0:
                     Q = t[2][i] / t[1][i]
-                    if board.turn == Black:
+                    if board.turn == Table.__class__.Black:
                         Q = 1 - Q
                 AMAF = t[4][code] / t[3][code]
-                if board.turn == Black:
+                if board.turn == Table.__class__.Black:
                     AMAF = 1 - AMAF
                 val = (1.0 - beta) * Q + beta * AMAF
             if val > bestValue:
@@ -251,7 +252,7 @@ def RAVE(Table, board, played):
 def BestMoveRAVE(Table, board, n):    
     for i in range(n):
         b1 = copy.deepcopy(board)
-        res = RAVE(Table, b1, [])
+        _ = RAVE(Table, b1, [])
     t = Table.look(board)
     moves = board.legalMoves()
     best = moves[0]
@@ -286,7 +287,7 @@ def UCT(Table, board, depth=0):
             val = 10000000.0
             if t[1][i] > 0:
                 Q = t[2][i] / t[1][i]
-                if board.turn == Black:
+                if board.turn == Table.__class__.Black:
                     Q = 1 - Q
                 val = Q + 0.4*np.sqrt(np.log(t[0])/t[1][i])
             if val > bestValue :
@@ -305,7 +306,7 @@ def UCT(Table, board, depth=0):
 def BestMoveUCT(Table, board, n):    
     for i in range(n):
         b1 = copy.deepcopy(board)
-        res = UCT(Table, b1)
+        _ = UCT(Table, b1)
     t = Table.look(board)
     moves = board.legalMoves()
     best = moves[0]
@@ -322,7 +323,7 @@ def BestMoveUCT(Table, board, n):
 Flat Monte Carlo
 """
 
-def flat (board, n):
+def flat (Table, board, n):
     moves = board.legalMoves ()
     bestScore = 0
     bestMove = moves [0]
@@ -333,7 +334,7 @@ def flat (board, n):
             b = copy.deepcopy (board)
             b.play (moves [m])
             r = b.playout ()
-            if board.turn == Black:
+            if board.turn == Table.__class__.Black:
                 r = 1 - r
             s = s + r
         if s > bestScore:
@@ -347,7 +348,7 @@ def flat (board, n):
 UCB
 """
 
-def UCB (board, n):
+def UCB (Table, board, n):
     moves = board.legalMoves ()
     sumScores = [0.0 for x in range (len (moves))]
     nbVisits = [0 for x in range (len(moves))]
@@ -364,7 +365,7 @@ def UCB (board, n):
         b = copy.deepcopy (board)
         b.play (moves [bestMove])
         r = b.playout ()
-        if board.turn == Black:
+        if board.turn == Table.__class__.Black:
             r = 1.0 - r
         sumScores [bestMove] += r
         nbVisits [bestMove] += 1
@@ -381,14 +382,14 @@ def UCB (board, n):
 Random player
 """
 
-def random_bot(board):
+def random_bot(Table, board):
     return np.random.choice(board.legalMoves ())
 
 """
 Same move player
 """
 
-def same_move(board):
+def same_move(Table, board):
     return board.legalMoves ()[0]
 
 

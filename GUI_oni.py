@@ -9,12 +9,11 @@ import sys
 from modules import onitama as GAME
 from modules import play_functions as PLAYERS
 from modules import transposition_table
-import time
 # import copy
 
 ##Constantes
 '''
-Game and player constants. They communicate some things through the transposition table
+Game and player constants. They communicate through the transposition table
 '''
 
 White = GAME.White
@@ -23,6 +22,8 @@ transposition_table.T_Table.MaxLegalMoves = GAME.ONITAMA_CARDS_IN_GAME * GAME.ON
 
 transposition_table.T_Table.MaxTotalLegalMoves = 2 * GAME.Dx * GAME.Dy * GAME.ONITAMA_CARDS_IN_GAME * GAME.ONITAMA_MAX_MOVES_CARD * 2 * 2
 
+transposition_table.T_Table.White = GAME.White
+transposition_table.T_Table.Black = GAME.Black
 
 '''
 GUI related definitions
@@ -35,21 +36,36 @@ WIDTH = WIDTH_BOARD + WIDTH_CARDS
 
 DIMENSION = 5
 SQ_SIZE = HEIGHT // DIMENSION
+SHRINE_PAD = 5
+PION_H_PAD = 20
 
 MAX_FPS = 20
 
 IMAGES_background = p.transform.scale(p.image.load("images/board_good_size_redone.png"), (WIDTH_BOARD, HEIGHT))
 
-# IMAGES_w = p.transform.scale(p.image.load("GUI/images/wp.png"), (SQ_SIZE, SQ_SIZE))
-# IMAGES_wK = p.transform.scale(p.image.load("GUI/images/wK.png"), (SQ_SIZE, SQ_SIZE))
-# IMAGES_b = p.transform.scale(p.image.load("GUI/images/bp.png"), (SQ_SIZE, SQ_SIZE))
-
 IMAGES_w = p.transform.scale(p.image.load("images/red_pawn_decoupe.png"), (49, 81))
 IMAGES_wK = p.transform.scale(p.image.load("images/red_king_decoupe.png"), (43 + 10, 90 + 10))
 IMAGES_b = p.transform.scale(p.image.load("images/blue_pawn_decoupe.png"), (50, 80))
 IMAGES_bK = p.transform.scale(p.image.load("images/blue_king_decoupe.png"), (42 + 15, 90 + 10))
+
+IMAGES_shrine_blue= p.transform.scale(p.image.load("images/shrine_blue.png"), (SQ_SIZE-2*SHRINE_PAD, SQ_SIZE-2*SHRINE_PAD))
+IMAGES_shrine_red = p.transform.scale(p.image.load("images/shrine_red.png"), (SQ_SIZE-2*SHRINE_PAD, SQ_SIZE-2*SHRINE_PAD))
+
+
 piece_imgs = {GAME.White: IMAGES_w, GAME.WhiteK: IMAGES_wK,
               GAME.Black: IMAGES_b, GAME.BlackK: IMAGES_bK}
+
+'''
+Define colors here
+'''
+
+color_orange = p.Color(255, 195, 117, a=125)
+color_white = p.Color("white")
+color_highlight = p.Color(210, 138, 255, a=125)
+color_selected = p.Color(125, 255, 136, a=125)
+color_cards_background = p.Color(255, 141, 48, a=125)
+# For the board
+colors = [color_white, color_orange]
 
 # Functions to locate cards, set them in the board, get the selected cards
 PAD = 4
@@ -59,15 +75,6 @@ range_cards_low = {0: 0*CARD_HEIGHT, 1: 1*CARD_HEIGHT, 2:2*CARD_HEIGHT + separat
                    3:3*CARD_HEIGHT + 2*separation, 4:4*CARD_HEIGHT + 2*separation}
 range_cards_high = {0: 1*CARD_HEIGHT, 1: 2*CARD_HEIGHT, 2:3*CARD_HEIGHT + separation,
                    3:4*CARD_HEIGHT + 2*separation, 4:5*CARD_HEIGHT + 2*separation}
-
-def find_card(loc):
-  for k, v in range_cards_low.items():
-    up = range_cards_high[k]
-    if v < loc and loc < up:
-      return k
-  return None
-
-
 
 cards_files = {"Rooster":"rooster.jpg",
 "Crab":"crab.jpg",
@@ -87,6 +94,18 @@ cards_files = {"Rooster":"rooster.jpg",
 "Ox":"ox.jpg"}
 
 cards_images = {k: p.transform.scale(p.image.load("images/{}".format(v)), (CARD_WIDTH, CARD_HEIGHT)) for k, v in cards_files.items()}
+
+
+'''
+GUI related functions
+'''
+
+def find_card(loc):
+  for k, v in range_cards_low.items():
+    up = range_cards_high[k]
+    if v < loc and loc < up:
+      return k
+  return None
 
 def change_to_color(rects, color='red'):
   for r in rects: r.fill(p.Color(color))
@@ -109,7 +128,7 @@ def refresh_colors_board(board_cells, first_piece_selected):
   restart_board_colors(board_cells)
   if not first_piece_selected is None:
     row, col = first_piece_selected 
-    board_cells[row][col].fill(p.Color('green'))
+    board_cells[row][col].fill(color_selected)
     
   
 def highlight_moves(gs, board_cells, first_piece_selected, card_selected):
@@ -123,19 +142,87 @@ def highlight_moves(gs, board_cells, first_piece_selected, card_selected):
       x2, y2 = x1 + move_card[0], y1 + move_card[1]
       if is_on_board(x2, y2) and not is_on_own_piece(gs, x2, y2):
         print(x2, ', ', y2)
-        board_cells[x2][y2].fill(p.Color('blue'))
+        board_cells[x2][y2].fill(color_highlight)
   
+def drawGameState(screen_board, screen_cards, screen_cards_ind_frame, screen_cards_ind_inner, gs, board_cells):
+    # drawBoard(screen_board)
+    # displayBoard(screen_board)
+    drawPieces(screen_board, gs.board, board_cells)
+    drawCards(screen_cards, screen_cards_ind_frame, screen_cards_ind_inner, gs)
 
-"""
-Main pour joueur à la main contre un programme
-"""
+def color_square(screen,c, r, color=color_selected):
+  p.draw.rect(screen, color, p.Rect(c*SQ_SIZE, r*SQ_SIZE, SQ_SIZE, SQ_SIZE))
+
+def drawBoard(screen):    
+    for r in range(DIMENSION):
+        for c in range(DIMENSION):
+            color = colors[(r+c)%2]
+            p.draw.rect(screen, color, p.Rect(c*SQ_SIZE, r*SQ_SIZE, SQ_SIZE, SQ_SIZE))
+            
+
+def displayBoard(screen):
+    screen.blit(IMAGES_background, p.Rect(0, 0, WIDTH_BOARD, HEIGHT))
 
 
+def restart_board_colors(board_cells, colors=colors):
+  for i in range(DIMENSION):
+      for j in range(DIMENSION):      
+        color = colors[(j+i)%2]        
+        board_cells[i][j].fill(color)
 
+def drawPieces(screen, board, board_cells, colors=colors):
+    for r in range(DIMENSION):
+        for c in range(DIMENSION):
+            if r==0 and c==2:
+                 board_cells[r][c].blit(IMAGES_shrine_blue, p.Rect(SHRINE_PAD, SHRINE_PAD, SQ_SIZE-SHRINE_PAD, SQ_SIZE-SHRINE_PAD))
+            if r==4 and c==2:
+                board_cells[r][c].blit(IMAGES_shrine_red, p.Rect(5, 5, SQ_SIZE-5, SQ_SIZE-5))
+            piece = board[r][c]
+            if piece != GAME.Empty:
+              img = piece_imgs[piece]
+              board_cells[r][c].blit(img, p.Rect( 30,  10, SQ_SIZE, SQ_SIZE))
+            else:
+              blank = p.Surface((SQ_SIZE, SQ_SIZE))
+              blank.fill(board_cells[r][c].get_at((1,1)))
+              board_cells[r][c].blit(blank, p.Rect( 0,  0, SQ_SIZE, SQ_SIZE))
+              
+
+def drawCards(screen, screen_cards_ind_frame, screen_cards_ind_inner, board):
+  names = board.chosen_cards
+  height = 0
+  delta_h = CARD_HEIGHT
+  
+  cont = 0
+  separation = (HEIGHT - 5*CARD_HEIGHT - 5*PAD)//2
+  for i in board.b_cards:
+    screen.blit(cards_images[names[i]], screen_cards_ind_inner[cont])
+    height += delta_h + PAD
+    cont +=1
+
+  height += separation
+  
+  # Middle card  
+  # screen.blit(cards_images[names[board.m_card]], cards_rects[cont])  
+  screen.blit(cards_images[names[board.m_card]], screen_cards_ind_inner[cont])
+  height += delta_h + PAD
+  cont +=1
+    
+  height += separation
+  
+  for i in board.w_cards:
+    # screen.blit(cards_images[names[i]], cards_rects[cont])
+    screen.blit(cards_images[names[i]], screen_cards_ind_inner[cont])
+    height += delta_h + PAD
+    cont +=1
 
 
 def main(**kwargs):
+    """
+    Main pour joueur à la main contre un programme
+    """
+    # Get needed attributes
     nb_coups = kwargs['nb_coups']
+   
     # Start pygame
     
     p.init()
@@ -165,8 +252,7 @@ def main(**kwargs):
       screen_cards_ind_frame[i] = screen_cards.subsurface(
         p.Rect(0, height, CARD_WIDTH+2*PAD, CARD_HEIGHT+2*PAD))
       
-      screen_cards_ind_inner[i] = screen_cards_ind_frame[i].subsurface(
-        p.Rect(PAD, PAD, CARD_WIDTH, CARD_HEIGHT))
+      screen_cards_ind_inner[i] = p.Rect(PAD, height+PAD, CARD_WIDTH, CARD_HEIGHT)
       
       height += delta_h
   
@@ -174,8 +260,7 @@ def main(**kwargs):
     screen_cards_ind_frame[2] = screen_cards.subsurface(
         p.Rect(0, height, CARD_WIDTH+2*PAD, CARD_HEIGHT+2*PAD))
     
-    screen_cards_ind_inner[2] = screen_cards_ind_frame[2].subsurface(
-        p.Rect(PAD, PAD, CARD_WIDTH, CARD_HEIGHT))
+    screen_cards_ind_inner[2] = p.Rect(PAD, height+PAD, CARD_WIDTH, CARD_HEIGHT)
     height += delta_h 
     height += separation
     
@@ -183,8 +268,7 @@ def main(**kwargs):
       screen_cards_ind_frame[i] = screen_cards.subsurface(
         p.Rect(0, height, CARD_WIDTH+2*PAD, CARD_HEIGHT+2*PAD))
       
-      screen_cards_ind_inner[i] = screen_cards_ind_frame[i].subsurface(
-        p.Rect(PAD, PAD, CARD_WIDTH, CARD_HEIGHT))
+      screen_cards_ind_inner[i] = p.Rect(PAD, height+PAD, CARD_WIDTH, CARD_HEIGHT)
       
       height += delta_h 
       
@@ -194,10 +278,10 @@ def main(**kwargs):
     screen_board = screen.subsurface(board_camera)
     
     screen_board.fill(p.Color("white"))
-    screen_cards.fill(p.Color("red"))
+    screen_cards.fill(color_cards_background)
     
     board_cells = {i: {} for i in range(DIMENSION)}
-    colors = [p.Color("white"), p.Color("gray")]
+    
     for i in range(DIMENSION):
       for j in range(DIMENSION):      
         color = colors[(j+i)%2]
@@ -212,7 +296,6 @@ def main(**kwargs):
     
     # Start game
     gs = GAME.Board()
-    T = transposition_table.T_Table()    
     first_piece_selected = None
     card_selected = None
     
@@ -267,8 +350,8 @@ def main(**kwargs):
                           
                           #Highlight the card
                           back = screen_cards_ind_frame[card_selected]
-                          change_to_color(list(screen_cards_ind_frame.values()))
-                          back.fill(p.Color('green'))
+                          change_to_color(list(screen_cards_ind_frame.values()), color_cards_background)
+                          back.fill(color_selected)
                           
                           # if first cell is selected, highlight the possible moves
                           print("Checking spots to highlight")
@@ -294,18 +377,15 @@ def main(**kwargs):
                               print("Must move to an empty space")                                                            
                             else:                              
                               restart_board_colors(board_cells)
-                              board_cells[row][col].fill(p.Color('green'))
+                              board_cells[row][col].fill(color_selected)
                               first_piece_selected = (row, col)
                               
                               # If card is selected, highlight
                               # if first cell is selected, highlight the possible moves
                               if not card_selected is None:
-                                x1, y1 = first_piece_selected
-                                moves_card = GAME.cards[gs.chosen_cards[translate_card_on_board(gs, card_selected)]]
-                                for move_card in moves_card:                              
-                                  x2, y2 = x1 + move_card[0], y1 + move_card[1]
-                                  if is_on_board(x2, y2) and not is_on_own_piece(gs, x2, y2):
-                                    board_cells[x2][y2].fill(p.Color('blue'))
+                               
+                                highlight_moves(gs, board_cells, first_piece_selected, card_selected)
+                              
                           else:
                             # Only works if first piece is selected,
                             # card is selected, and move is a valid move                            
@@ -341,13 +421,14 @@ def main(**kwargs):
                                        
             else:
                 # Bot plays
+                T = transposition_table.T_Table() 
                 gs.play (PLAYERS.SHUSS(T, gs, nb_coups))
                 if gs.terminal():
                   print("END")
                   block_game=True
                 
             
-            drawGameState(screen_board, screen_cards, screen_cards_ind_inner, gs, board_cells)
+            drawGameState(screen_board, screen_cards, screen_cards_ind_frame, screen_cards_ind_inner, gs, board_cells)
             clock.tick(MAX_FPS)
             
             p.display.flip()
@@ -358,138 +439,16 @@ def main(**kwargs):
         p.quit()
         sys.exit()
         
-
-
-def drawGameState(screen_board, screen_cards, screen_cards_ind_inner, gs, board_cells):
-    # drawBoard(screen_board)
-    # displayBoard(screen_board)
-    drawPieces(screen_board, gs.board, board_cells)
-    drawCards(screen_cards, screen_cards_ind_inner, gs)
-
-def color_square(screen,c, r, color='green'):
-  p.draw.rect(screen, color, p.Rect(c*SQ_SIZE, r*SQ_SIZE, SQ_SIZE, SQ_SIZE))
-
-def drawBoard(screen):
-    colors = [p.Color("white"), p.Color("gray")]
-    for r in range(DIMENSION):
-        for c in range(DIMENSION):
-            color = colors[(r+c)%2]
-            p.draw.rect(screen, color, p.Rect(c*SQ_SIZE, r*SQ_SIZE, SQ_SIZE, SQ_SIZE))
-
-def displayBoard(screen):
-    screen.blit(IMAGES_background, p.Rect(0, 0, WIDTH_BOARD, HEIGHT))
-
-
-def restart_board_colors(board_cells, colors=[p.Color("white"), p.Color("gray")]):
-  for i in range(DIMENSION):
-      for j in range(DIMENSION):      
-        color = colors[(j+i)%2]        
-        board_cells[i][j].fill(color)
-
-def drawPieces(screen, board, board_cells, colors=[p.Color("white"), p.Color("gray")]):
-    for r in range(DIMENSION):
-        for c in range(DIMENSION):
-            piece = board[r][c]
-            if piece != GAME.Empty:
-              img = piece_imgs[piece]
-              board_cells[r][c].blit(img, p.Rect( 30,  10, SQ_SIZE, SQ_SIZE))
-            else:
-              blank = p.Surface((SQ_SIZE, SQ_SIZE))
-              blank.fill(board_cells[r][c].get_at((1,1)))
-              board_cells[r][c].blit(blank, p.Rect( 0,  0, SQ_SIZE, SQ_SIZE))
-              
-
-def drawCards(screen, screen_cards_ind_inner, board):
-  names = board.chosen_cards
-  height = 0
-  delta_h = CARD_HEIGHT
-  
-  cont = 0
-  separation = (HEIGHT - 5*CARD_HEIGHT - 5*PAD)//2
-  for i in board.b_cards:
-    parent = screen_cards_ind_inner[cont].get_parent()
-    parent.blit(cards_images[names[i]], screen_cards_ind_inner[cont].get_bounding_rect())
-    height += delta_h + PAD
-    cont +=1
-
-  height += separation
-  
-  # Middle card  
-  # screen.blit(cards_images[names[board.m_card]], cards_rects[cont])
-  parent = screen_cards_ind_inner[cont].get_parent()
-  parent.blit(cards_images[names[board.m_card]], screen_cards_ind_inner[cont].get_bounding_rect())
-  height += delta_h + PAD
-  cont +=1
-    
-  height += separation
-  
-  for i in board.w_cards:
-    # screen.blit(cards_images[names[i]], cards_rects[cont])
-    parent = screen_cards_ind_inner[cont].get_parent()
-    parent.blit(cards_images[names[i]], screen_cards_ind_inner[cont].get_bounding_rect())
-    height += delta_h + PAD
-    cont +=1
-  
-
-
 """
 Main pour faire jouer deux bots l'un contre l'autre en utilisant le GUI
 """
 
 def main_bot_vs_bot(bot1, bot2, bot1_kwargs, bot2_kwargs):
-    p.init()
-    screen = p.display.set_mode((WIDTH, HEIGHT))
-    clock = p.time.Clock()
-    screen.fill(p.Color("white"))
-    gs = GAME.Board()
-    # validMoves = gs.legalMoves()
-    # moveMade = False
-    running = True
-    # sqSelected = ()
-    # playerClicks = []
-    game_finished = False
-
-    
-    while running:
-        drawGameState(screen, gs)
-        clock.tick(MAX_FPS)
-        p.display.flip()
-        if gs.terminal() and not game_finished:
-            print("END")
-            print(gs.score())
-            game_finished = True
-        if game_finished == False:
-            if gs.turn == White: ## Pour faire jouer RAVE en Blanc il suffit de changer == White par == Black
-                """
-                UCB joue blanc
-                """
-                bot1_kwargs['board'] = gs                
-                move = bot1(**bot1_kwargs)
-                gs.play(move)
-                print("bot 1 played")
-                print("Card: {}".format(gs.chosen_cards[move.card]))
-                print(gs.board)
-            elif gs.turn == Black:
-                """
-                Flat joue noir
-                """
-                # gs.play_random ()
-                bot2_kwargs['board'] = gs
-                move = bot2(**bot2_kwargs)
-                gs.play(move)                
-                print("bot 2 played")
-                print("Card: {}".format(gs.chosen_cards[move.card]))
-                print(gs.board)
-        else:
-            p.quit()
-            sys.exit()
-        # time.sleep(2)
-
+    print("Still to be redone")
 
 
 if __name__ == "__main__":
     
-  
     """
     GUI human vs bot
     """

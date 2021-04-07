@@ -3,13 +3,16 @@
 class T_Table(object):
     MaxLegalMoves = None
     MaxTotalLegalMoves = None
+    White = None
+    Black = None
     
     def __init__(self):
-        if T_Table.MaxLegalMoves is None or T_Table.MaxTotalLegalMoves is None:
+        '''
+        Check that game info to pass to players has been defined
+        '''
+        if T_Table.MaxLegalMoves is None or T_Table.MaxTotalLegalMoves is None or T_Table.White is None or T_Table.Black is None:
             raise Exception("Before creating a Transposition table, class variables 'MaxLegalMoves' and 'MaxTotalLegalMoves' must be set. Use game constants to define these values")
             
-        self.MaxLegalMoves = T_Table.MaxLegalMoves
-        self.MaxTotalLegalMoves = T_Table.MaxTotalLegalMoves
         self.Table = {}
     
     def look(self, board):

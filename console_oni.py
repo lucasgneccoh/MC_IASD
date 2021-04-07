@@ -24,6 +24,9 @@ transposition_table.T_Table.MaxLegalMoves = GAME.ONITAMA_CARDS_IN_GAME * GAME.ON
 
 transposition_table.T_Table.MaxTotalLegalMoves = 2 * GAME.Dx * GAME.Dy * GAME.ONITAMA_CARDS_IN_GAME * GAME.ONITAMA_MAX_MOVES_CARD * 2 * 2
 
+transposition_table.T_Table.White = GAME.White
+transposition_table.T_Table.Black = GAME.Black
+
 def main_bot_vs_bot_console(bot1 = PLAYERS.UCB, bot2 = PLAYERS.flat, bot1_kwargs ={}, bot2_kwargs ={}, time_sleep = 1):
     
     gs = GAME.Board()
@@ -39,7 +42,8 @@ def main_bot_vs_bot_console(bot1 = PLAYERS.UCB, bot2 = PLAYERS.flat, bot1_kwargs
                 """
                 UCB joue blanc
                 """
-                bot1_kwargs['board'] = gs                
+                bot1_kwargs['Table'] = transposition_table.T_Table()
+                bot1_kwargs['board'] = gs 
                 move = bot1(**bot1_kwargs)
                 gs.play(move)
                 print("bot 1 played")
@@ -51,6 +55,7 @@ def main_bot_vs_bot_console(bot1 = PLAYERS.UCB, bot2 = PLAYERS.flat, bot1_kwargs
                 Flat joue noir
                 """
                 # gs.play_random ()
+                bot2_kwargs['Table'] = transposition_table.T_Table()
                 bot2_kwargs['board'] = gs
                 move = bot2(**bot2_kwargs)
                 gs.play(move)                
@@ -122,24 +127,16 @@ if __name__ == "__main__":
     Console bot vs bot
     """
     if True:
-      nb_coups = 1000
-      
-      # if player function requires a transposition table, it must be passed to the main function as a kwarg Table = t_table
-      # main_console()
-
-      T1 = transposition_table.T_Table()
-      T2 = transposition_table.T_Table()
-      # bot1 = PLAYERS.BestMoveGRAVE
-      # bot1_kwargs = {'Table': T1,'n': nb_coups}
-      
+      nb_coups = 200
+            
       # White player
       bot1 = PLAYERS.BestMoveGRAVE
-      bot1_kwargs = {'Table': T1, 'n': nb_coups}
+      bot1_kwargs = {'n': nb_coups}
       
       
       # Black player
-      bot2 = PLAYERS.SHUSS
-      bot2_kwargs = {'Table': T2, 'n': nb_coups}
+      bot2 = PLAYERS.SequentialHalving
+      bot2_kwargs = {'n': nb_coups}
       
       main_bot_vs_bot_console(bot1, bot2, bot1_kwargs, bot2_kwargs)
     
