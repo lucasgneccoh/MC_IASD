@@ -39,19 +39,24 @@ def updateTable(df, df_hist, white_bot, black_bot, res, dt_string):
         df[black_bot.name][white_bot.name] = "/".join([str(res) for res in list_res])
         hist["Winner"] = white_bot.name
         # df[black_bot.name][white_bot.name][0] += 1
-
-    else:
+        updateElo(W = res, bot1 = white_bot, bot2 = black_bot, df = df)
+        df["nb_played"][black_bot.name] +=1
+        df["nb_played"][white_bot.name] +=1
+    elif res == 0:
         list_res = df[white_bot.name][black_bot.name].split("/")
         list_res[0] = int(list_res[0])
         list_res[1] = int(list_res[1])
         list_res[1] += 1
         df[white_bot.name][black_bot.name] = "/".join([str(res) for res in list_res])
         hist["Winner"] = black_bot.name
+        updateElo(W = res, bot1 = white_bot, bot2 = black_bot, df = df)
+        df["nb_played"][black_bot.name] +=1
+        df["nb_played"][white_bot.name] +=1
+    else:
+      # Error
+      hist["Winner"] = "Error"
 
-    updateElo(W = res, bot1 = white_bot, bot2 = black_bot, df = df)
-
-    df["nb_played"][black_bot.name] +=1
-    df["nb_played"][white_bot.name] +=1
+    
     hist["Elo White After"] = df["elo"][white_bot.name]
     hist["Elo Black After"] = df["elo"][black_bot.name]
     # df_hist = df_hist.append(hist, ignore_index = True)

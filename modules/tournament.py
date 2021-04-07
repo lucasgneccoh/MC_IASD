@@ -139,7 +139,7 @@ except:
         df.loc[i] = [bot.name, 1200, 0] + ["0/0"]*len(all_bots)
     df.set_index("bot", inplace=True)
     if not os.path.exists(path_b):
-      with open(path_b,'w') as f:
+      with open(path_b,'w+') as f:
         f.close()
     df.to_csv(path_b)
     
@@ -153,7 +153,7 @@ try:
 except:
     df_hist = pd.DataFrame(columns = ["datetime", "White", "Black", "Winner", "Elo White Before", "Elo Black Before", "Elo White After","Elo Black After"])
     if not os.path.exists(path_h):
-      with open(path_h, 'w') as f:
+      with open(path_h, 'w+') as f:
         f.close()
     df_hist.to_csv(path_h)
 
