@@ -58,10 +58,14 @@ def bot1_vs_bot2(white_bot, black_bot, verbose = False):
             board.play(white_bot.play(board))
         else:
             board.play (black_bot.play(board))
-        if verbose:
-            print(board.board)  
+        if verbose: 
+            # print(board.board)
+            pass
 
-
+def res_status(res, white_bot, black_bot):
+  if res == 1: return white_bot.name
+  if res == 0: return black_bot.name
+  return "error"
 
 n_tot = 1000
 
@@ -95,9 +99,6 @@ flat1000 = Bot("FLAT_1000", PLAYERS.flat, n=n_tot)
 # flat100 = Bot("FLAT_100", PLAYERS.UCB, n=100)
 # shu100_c128 = Bot("SHUSS_100_C128", BtEngine.SHUSS, n=100, c = 128)
 
-# For testing
-ucbTest= Bot("UCB_test", PLAYERS.UCB, n=100)
-flatTest = Bot("FLAT_test", PLAYERS.flat, n=100)
 
 all_bots = [shu1000_c16, shu1000_c64, shu1000_c128, shu1000_c256, uct1000, sh1000, gr1000, r1000, ucb1000, flat1000]
 # all_bots = [uct1000,  gr1000, r1000, ucb1000, flat1000]
@@ -105,7 +106,11 @@ all_bots = [shu1000_c16, shu1000_c64, shu1000_c128, shu1000_c256, uct1000, sh100
 # all_bots = [r500, ucb500, flat500]
 # all_bots = [r50, ucb50, flat50]
 
-all_bots = [ucbTest, flatTest]
+
+## For testing
+# ucbTest= Bot("UCB_test", PLAYERS.UCB, n=100)
+# flatTest = Bot("FLAT_test", PLAYERS.flat, n=100)
+# all_bots = [ucbTest, flatTest]
 
 
 args = parseInputs()
@@ -113,7 +118,8 @@ args = parseInputs()
 BASE_PATH = args.out_path
 VERBOSE = True if args.verbose=='true' else False
 ROUNDS = int(args.rounds)
-
+PRINT_LENGTH = 40
+FILL_CHAR = '-'
 
 
 
@@ -162,42 +168,50 @@ all_matches = list(combinations(all_bots, 2))
 simple_table = pd.DataFrame(columns = ['white_bot','black_bot', 'score','time'])
 
 dt_string = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-
+format_key = "{{:{}^{}}}".format(FILL_CHAR, PRINT_LENGTH)
+format_key_star = "{{:{}^{}}}".format("*", PRINT_LENGTH)
 counter = 0
-for round in range(ROUNDS):
+for r in range(ROUNDS):
     shuffle(all_matches)
     if VERBOSE:
-      print("-"*20)
-      print("ROUND {}".format(round))
+      print("*"*PRINT_LENGTH)
+      print(format_key_star.format(" ROUND {} ".format(r)))
+      print("*"*PRINT_LENGTH)
     for i in range(len(all_matches)):
         white_bot, black_bot = all_matches[i][0], all_matches[i][1]
-        if VERBOSE: 
-          print("MATCH {} on {}".format(i + 1, len(all_matches)))        
-          print("*"*20)
-          print("MATCH {} VS {}".format(white_bot.name, black_bot.name))
+        if VERBOSE:          
+          print(format_key.format("  MATCH {} on {}  ".format(i + 1, len(all_matches))))  
+          print("-"*PRINT_LENGTH)
+          print(format_key.format("  MATCH {} VS {}  ".format(white_bot.name, black_bot.name)))
+          
         start = time.process_time()
-        res = bot1_vs_bot2(white_bot = white_bot, black_bot = black_bot, verbose = False)
+        try:
+          res = bot1_vs_bot2(white_bot = white_bot, black_bot = black_bot, verbose = VERBOSE)
+        except Exception as e:
+          res = None
         
         simple_table.loc[counter] = [white_bot.name, black_bot.name, res, time.process_time()-start]
         counter += 1
         if VERBOSE: 
-          print("Winner: {}".format(white_bot.name if res >0.5 else black_bot.name))
+          print("Winner: {}".format(res_status(res,white_bot,black_bot)))
         
         hist = elo.updateTable(df, df_hist, white_bot, black_bot, res, dt_string)
         df_hist = df_hist.append(hist, ignore_index = True)
-        
-
         white_bot, black_bot = all_matches[i][1], all_matches[i][0]
-        # print("*"*20)
+        print()
         if VERBOSE: 
-          print("SWITCHING SIDES")
+          print(format_key.format("  SWITCHING SIDES  "))
         start = time.process_time()
-        res = bot1_vs_bot2(white_bot = white_bot, black_bot = black_bot, verbose = False)
+        try:
+          res = bot1_vs_bot2(white_bot = white_bot, black_bot = black_bot, verbose = VERBOSE)
+        except Exception as e:
+          res = None
+        
         
         simple_table.loc[counter] = [white_bot.name, black_bot.name, res, time.process_time()-start]
         counter += 1
         if VERBOSE: 
-          print("Winner: {}".format(white_bot.name if res >0.5 else black_bot.name))
+          print("Winner: {}".format(res_status(res,white_bot,black_bot)))
       
         hist = elo.updateTable(df, df_hist, white_bot, black_bot, res, dt_string)
         df_hist = df_hist.append(hist, ignore_index = True)

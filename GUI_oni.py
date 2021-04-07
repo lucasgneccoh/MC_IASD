@@ -552,15 +552,15 @@ if __name__ == "__main__":
     """
     if True:
       '''
-Define bots dictionary here
-'''
+      Define bots dictionary here
+      '''
       bots = PLAYERS.bots
       args = parseInputs()
       enemy = bots[args.enemy]
       enemy_name = args.enemy
       n = int(args.n)
       play_as = GAME.White if args.play_as == "red" else GAME.Black
-      print(args)
+      # print(args)
       main(nb_coups = n, enemy = enemy, play_as = play_as, enemy_name = enemy_name)
   
   
