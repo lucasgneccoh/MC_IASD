@@ -16,6 +16,7 @@ def parseInputs():
   parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
   parser.add_argument("--out_path", help="Path to dump the output files with the results", default='../data')
   parser.add_argument("--verbose", help="Controls console output. true or false", default='false')
+  parser.add_argument("--save_at_each", help="Choose to save the results after every match. If false, saves only at the end of the tournament", default='true')
   parser.add_argument("--rounds", help="Number of rounds each pair of bots will play (two games per round, home and away)", default=2)
   args = parser.parse_args()
   return args
@@ -117,6 +118,7 @@ args = parseInputs()
 
 BASE_PATH = args.out_path
 VERBOSE = True if args.verbose=='true' else False
+SAVE_EACH = True if args.save_at_each=='true'else False
 ROUNDS = int(args.rounds)
 PRINT_LENGTH = 40
 FILL_CHAR = '-'
@@ -227,6 +229,10 @@ for r in range(ROUNDS):
       
         hist = elo.updateTable(df, df_hist, white_bot, black_bot, res, dt_string)
         df_hist = df_hist.append(hist, ignore_index = True)
+        
+        if SAVE_EACH:
+          df.to_csv(path_b)
+          df_hist.to_csv(path_h, index = False)
         
 
 df.to_csv(path_b)
