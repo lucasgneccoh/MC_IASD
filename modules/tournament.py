@@ -1,12 +1,13 @@
 import pandas as pd
 import play_functions as PLAYERS
 import onitama as GAME
-from itertools import combinations
+from itertools import combinations, cycle, count
 import transposition_table as T
 import time
 import elo
 from random import shuffle
 import os
+import sys
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from datetime import datetime
 
@@ -18,6 +19,7 @@ def parseInputs():
   parser.add_argument("--verbose", help="Controls console output. true or false", default='false')
   parser.add_argument("--save_at_each", help="Choose to save the results after every match. If false, saves only at the end of the tournament", default='true')
   parser.add_argument("--rounds", help="Number of rounds each pair of bots will play (two games per round, home and away)", default=2)
+  parser.add_argument("--n", help="Budget given to the algorithms that use a budget", default=100)
   args = parser.parse_args()
   return args
 
@@ -52,23 +54,37 @@ class Bot:
 
 def bot1_vs_bot2(white_bot, black_bot, verbose = False):
     board= GAME.Board()
+    loading = cycle(["-","/","|","\\"])
+    num_moves = count(0,1)
     while (True):
+        if verbose:
+            c = next(loading)
+            cont = next(num_moves)
+            sys.stdout.write('\rRunning {}, Total moves: {:05d}'.format(c, cont))
+            sys.stdout.flush()
         if board.terminal():
             return board.score()
         if board.turn == White:
             board.play(white_bot.play(board))
         else:
             board.play (black_bot.play(board))
-        if verbose: 
-            # print(board.board)
-            pass
+        
 
 def res_status(res, white_bot, black_bot):
   if res == 1: return white_bot.name
   if res == 0: return black_bot.name
   return "error"
 
-n_tot = 1000
+
+args = parseInputs()
+
+BASE_PATH = args.out_path
+VERBOSE = True if args.verbose=='true' else False
+SAVE_EACH = True if args.save_at_each=='true'else False
+ROUNDS = int(args.rounds)
+PRINT_LENGTH = 40
+FILL_CHAR = '-'
+n_tot = int(args.n)
 
 # shu1000_c4 = Bot("SHUSS_1000_C4", PLAYERS.SHUSS, n=n_tot, c = 4)
 shu1000_c16 = Bot("SHUSS_1000_C16", PLAYERS.SHUSS, n=n_tot, c = 16)
@@ -100,8 +116,14 @@ flat1000 = Bot("FLAT_1000", PLAYERS.flat, n=n_tot)
 # flat100 = Bot("FLAT_100", PLAYERS.UCB, n=100)
 # shu100_c128 = Bot("SHUSS_100_C128", BtEngine.SHUSS, n=100, c = 128)
 
+#Controls
+dumb = Bot("Dumb", PLAYERS.same_move)
+random = Bot("Random", PLAYERS.random_bot)
 
 all_bots = [shu1000_c16, shu1000_c64, shu1000_c128, shu1000_c256, uct1000, sh1000, gr1000, r1000, ucb1000, flat1000]
+
+# Compare only the SHUSS
+all_bots = [shu1000_c16, shu1000_c64, shu1000_c128, shu1000_c256, random]
 # all_bots = [uct1000,  gr1000, r1000, ucb1000, flat1000]
 
 # all_bots = [r500, ucb500, flat500]
@@ -114,14 +136,7 @@ all_bots = [shu1000_c16, shu1000_c64, shu1000_c128, shu1000_c256, uct1000, sh100
 # all_bots = [ucbTest, flatTest]
 
 
-args = parseInputs()
 
-BASE_PATH = args.out_path
-VERBOSE = True if args.verbose=='true' else False
-SAVE_EACH = True if args.save_at_each=='true'else False
-ROUNDS = int(args.rounds)
-PRINT_LENGTH = 40
-FILL_CHAR = '-'
 
 
 
@@ -207,7 +222,7 @@ for r in range(ROUNDS):
         simple_table.loc[counter] = [white_bot.name, black_bot.name, res, time.process_time()-start]
         counter += 1
         if VERBOSE: 
-          print("Winner: {}".format(res_status(res,white_bot,black_bot)))
+          print("\rWinner: {}".format(res_status(res,white_bot,black_bot)))
         
         hist = elo.updateTable(df, df_hist, white_bot, black_bot, res, dt_string)
         df_hist = df_hist.append(hist, ignore_index = True)
@@ -225,7 +240,7 @@ for r in range(ROUNDS):
         simple_table.loc[counter] = [white_bot.name, black_bot.name, res, time.process_time()-start]
         counter += 1
         if VERBOSE: 
-          print("Winner: {}".format(res_status(res,white_bot,black_bot)))
+          print("\rWinner: {}".format(res_status(res,white_bot,black_bot)))
       
         hist = elo.updateTable(df, df_hist, white_bot, black_bot, res, dt_string)
         df_hist = df_hist.append(hist, ignore_index = True)
