@@ -84,8 +84,8 @@ def bot_from_json_dict(info, bot_dict):
   
 
 # Fichier bots.csv avec les elos et les wins
-def bots_df(BASE_PATH, all_bots):
-  path_b = os.path.join(BASE_PATH,"bots.csv")
+def bots_df(BASE_PATH, all_bots, tournament):
+  path_b = os.path.join(BASE_PATH,"bots_{}.csv".format(tournament))
   if not os.path.exists(path_b):
     with open(path_b,'w+') as f:
       f.close()
@@ -112,8 +112,8 @@ def bots_df(BASE_PATH, all_bots):
   return df
 
 # Fichier matches_history.csv avec l'historique des parties
-def history_df(BASE_PATH):  
-  path_h = os.path.join(BASE_PATH,"matches_history.csv")
+def history_df(BASE_PATH, tournament):  
+  path_h = os.path.join(BASE_PATH,"matches_history_{}.csv".format(tournament))
   if not os.path.exists(path_h):
     with open(path_h, 'w+') as f:
       f.close()
@@ -149,29 +149,30 @@ tournaments = content['tournaments']
 
 # %% main
 
-path_b = os.path.join(BASE_PATH,"bots.csv")
-path_h = os.path.join(BASE_PATH,"matches_history.csv")
+
 
 for tourn in tournaments:
   format_key = "{{:{}^{}}}".format(FILL_CHAR, PRINT_LENGTH)
   format_key_star = "{{:{}^{}}}".format("*", PRINT_LENGTH)
   
-  
-  print("*"*PRINT_LENGTH)
-  print(format_key_star.format(" TOURNAMENT {} ".format(tourn)))
-  print("*"*PRINT_LENGTH)
-  print()
+  if VERBOSE:
+    print("*"*PRINT_LENGTH)
+    print(format_key_star.format(" TOURNAMENT {} ".format(tourn)))
+    print("*"*PRINT_LENGTH)
+    print()
   all_bots = [bot_from_json_dict(t, bot_dict) for t in tournaments[tourn]]
   all_matches = list(combinations(all_bots, 2))
   
-  df = bots_df(BASE_PATH, all_bots)
-  df_hist = history_df(BASE_PATH)
+  df = bots_df(BASE_PATH, all_bots, tourn)
+  df_hist = history_df(BASE_PATH, tourn)
   
   simple_table = pd.DataFrame(columns = ['white_bot','black_bot', 'score','time'])
   
   dt_string = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
   
   counter = 0
+  path_b = os.path.join(BASE_PATH,"bots_{}.csv".format(tourn))
+  path_h = os.path.join(BASE_PATH,"matches_history_{}.csv".format(tourn))
   for r in range(ROUNDS):
       shuffle(all_matches)
       if VERBOSE:
