@@ -10,8 +10,20 @@ import os
 import sys
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from datetime import datetime
+pd.options.mode.chained_assignment = None  # default='warn'
+
+# %% Set transposition table info here
+White = GAME.White
+Black = GAME.Black
+T.T_Table.MaxLegalMoves = GAME.ONITAMA_CARDS_IN_GAME * GAME.ONITAMA_MAX_MOVES_CARD * 5
+
+T.T_Table.MaxTotalLegalMoves = 2 * GAME.Dx * GAME.Dy * GAME.ONITAMA_CARDS_IN_GAME * GAME.ONITAMA_MAX_MOVES_CARD * 2 * 2
+
+T.T_Table.White = GAME.White
+T.T_Table.Black = GAME.Black
 
 
+# %% Classes and functions
 
 def parseInputs():
   parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
@@ -22,22 +34,6 @@ def parseInputs():
   parser.add_argument("--n", help="Budget given to the algorithms that use a budget", default=100)
   args = parser.parse_args()
   return args
-
-
-
-
-pd.options.mode.chained_assignment = None  # default='warn'
-
-
-# Set transposition table info here
-White = GAME.White
-Black = GAME.Black
-T.T_Table.MaxLegalMoves = GAME.ONITAMA_CARDS_IN_GAME * GAME.ONITAMA_MAX_MOVES_CARD * 5
-
-T.T_Table.MaxTotalLegalMoves = 2 * GAME.Dx * GAME.Dy * GAME.ONITAMA_CARDS_IN_GAME * GAME.ONITAMA_MAX_MOVES_CARD * 2 * 2
-
-T.T_Table.White = GAME.White
-T.T_Table.Black = GAME.Black
 
 
 class Bot:
@@ -76,6 +72,7 @@ def res_status(res, white_bot, black_bot):
   return "error"
 
 
+# %% Parse arguments
 args = parseInputs()
 
 BASE_PATH = args.out_path
@@ -86,6 +83,7 @@ PRINT_LENGTH = 40
 FILL_CHAR = '-'
 n_tot = int(args.n)
 
+# %% Define bots
 # shu1000_c4 = Bot("SHUSS_1000_C4", PLAYERS.SHUSS, n=n_tot, c = 4)
 shu1000_c16 = Bot("SHUSS_1000_C16", PLAYERS.SHUSS, n=n_tot, c = 16)
 shu1000_c64 = Bot("SHUSS_1000_C64", PLAYERS.SHUSS, n=n_tot, c = 64)
@@ -99,22 +97,6 @@ r1000 = Bot("RAVE_1000", PLAYERS.BestMoveRAVE, n=n_tot)
 ucb1000 = Bot("UCB_1000", PLAYERS.UCB, n=n_tot)
 flat1000 = Bot("FLAT_1000", PLAYERS.flat, n=n_tot)
 
-# r500 = Bot("RAVE_500", PLAYERS.BestMoveRAVE, n=500, Table = T.T_Table())
-# ucb500 = Bot("UCB_500", PLAYERS.UCB, n=500)
-# flat500 = Bot("FLAT_500", PLAYERS.flat, n=500)
-
-
-# r50= Bot("RAVE_50", PLAYERS.BestMoveRAVE, n=50, Table = T.T_Table())
-# ucb50 = Bot("UCB_50", PLAYERS.UCB, n=50)
-# flat50 = Bot("FLAT_50", PLAYERS.flat, n=50)
-
-# uct100 = Bot("UCT_100", PLAYERS.BestMoveUCT, n=100)
-# sh100 = Bot("SH_100", PLAYERS.SequentialHalving, n=100)
-# gr100 = Bot("GRAVE_100", PLAYERS.BestMoveGRAVE, n=100)
-# r100 = Bot("RAVE_100", PLAYERS.BestMoveRAVE, n=100)
-# ucb100 = Bot("UCB_100", PLAYERS.UCB, n=100)
-# flat100 = Bot("FLAT_100", PLAYERS.UCB, n=100)
-# shu100_c128 = Bot("SHUSS_100_C128", BtEngine.SHUSS, n=100, c = 128)
 
 #Controls
 dumb = Bot("Dumb", PLAYERS.same_move)
@@ -123,26 +105,16 @@ random = Bot("Random", PLAYERS.random_bot)
 all_bots = [shu1000_c16, shu1000_c64, shu1000_c128, shu1000_c256, uct1000, sh1000, gr1000, r1000, ucb1000, flat1000]
 
 # Compare only the SHUSS
-all_bots = [shu1000_c16, shu1000_c64, shu1000_c128, shu1000_c256, random]
-# all_bots = [uct1000,  gr1000, r1000, ucb1000, flat1000]
-
-# all_bots = [r500, ucb500, flat500]
-# all_bots = [r50, ucb50, flat50]
+# all_bots = [shu1000_c16, shu1000_c64, shu1000_c128, shu1000_c256, random]
 
 
-## For testing
+# %% For testing
 # ucbTest= Bot("UCB_test", PLAYERS.UCB, n=100)
 # flatTest = Bot("FLAT_test", PLAYERS.flat, n=100)
 # all_bots = [ucbTest, flatTest]
 
+# %% Fichier bots.csv avec les elos et les wins
 
-
-
-
-
-"""
-Fichier bots.csv avec les elos et les wins
-"""
 
 path_b = os.path.join(BASE_PATH,"bots.csv")
 if not os.path.exists(path_b):
@@ -168,11 +140,9 @@ else:
           df.loc[i] = [bot.name, 1200, 0] + ["0/0"]*len(all_bots)
       df.set_index("bot", inplace=True)
       df.to_csv(path_b)
-    
 
-"""
-Fichier matches_history.csv avec l'historique des parties
-"""
+# %% Fichier matches_history.csv avec l'historique des parties
+
 path_h = os.path.join(BASE_PATH,"matches_history.csv")
 if not os.path.exists(path_h):
   with open(path_h, 'w+') as f:
@@ -186,11 +156,7 @@ else:
       df_hist = pd.DataFrame(columns = ["datetime", "White", "Black", "Winner", "Elo White Before", "Elo Black Before", "Elo White After","Elo Black After"])
       df_hist.to_csv(path_h)
 
-
-
-"""
-main
-"""
+# %% main
 
 all_matches = list(combinations(all_bots, 2))
 
@@ -217,6 +183,7 @@ for r in range(ROUNDS):
         try:
           res = bot1_vs_bot2(white_bot = white_bot, black_bot = black_bot, verbose = VERBOSE)
         except Exception as e:
+          print(e)
           res = None
         
         simple_table.loc[counter] = [white_bot.name, black_bot.name, res, time.process_time()-start]
@@ -234,6 +201,7 @@ for r in range(ROUNDS):
         try:
           res = bot1_vs_bot2(white_bot = white_bot, black_bot = black_bot, verbose = VERBOSE)
         except Exception as e:
+          print(e)
           res = None
         
         

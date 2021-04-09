@@ -2,7 +2,7 @@
 Partie graphique réalisée avec Pygame
 """
 
-##Importations
+# %% Importations
 
 import pygame as p
 import sys
@@ -20,12 +20,13 @@ def parseInputs():
   parser.add_argument("--enemy", help="Name of the adversary AI. Options are: " + line, default = first_bot)
   parser.add_argument("--n", help="Budget given to the bots. Corresponds to the number of playouts they do before taking a move", default = 500)
   parser.add_argument("--play_as", help="Side you want to play. Options are red or blue", default = "red")
+  parser.add_argument("--console_debug", help="Set to true to print on the console the different events. Used to debug and follow game logic", default = "false")
   args = parser.parse_args()
   return args
 
 
 
-##Constantes
+# %%Constantes
 '''
 Game and player constants. They communicate through the transposition table
 '''
@@ -38,6 +39,7 @@ transposition_table.T_Table.MaxTotalLegalMoves = 2 * GAME.Dx * GAME.Dy * GAME.ON
 
 transposition_table.T_Table.White = GAME.White
 transposition_table.T_Table.Black = GAME.Black
+
 
 '''
 GUI related definitions
@@ -86,6 +88,7 @@ color_selected = p.Color(125, 255, 136, a=125)
 color_text_back = p.Color(245, 81, 185, a=125)
 color_text = p.Color(7, 7, 26, a=125)
 color_cards_background = p.Color(148, 25, 16, a=125) # Burgundy
+
 # For the board
 colors = [color_white, color_orange]
 
@@ -116,7 +119,6 @@ cards_files = {"Rooster":"rooster.jpg",
 "Ox":"ox.jpg"}
 
 cards_images = {k: p.transform.scale(p.image.load("images/{}".format(v)), (CARD_WIDTH, CARD_HEIGHT)) for k, v in cards_files.items()}
-
 
 '''
 GUI related functions
@@ -238,7 +240,6 @@ def drawCards(screen, screen_cards_ind_frame, screen_cards_ind_inner, board):
   height += separation
   
   # Middle card  
-  # screen.blit(cards_images[names[board.m_card]], cards_rects[cont])  
   screen.blit(cards_images[names[board.m_card]], screen_cards_ind_inner[cont])
   height += delta_h + PAD
   cont +=1
@@ -251,7 +252,6 @@ def drawCards(screen, screen_cards_ind_frame, screen_cards_ind_inner, board):
     height += delta_h + PAD
     cont +=1
 
-
 def main(**kwargs):
     """
     Main pour joueur à la main contre un programme
@@ -261,20 +261,15 @@ def main(**kwargs):
     enemy = kwargs['enemy']
     enemy_name = kwargs['enemy_name']
     human = kwargs['play_as']
+    console_debug = kwargs["console_debug"]
    
-    # Start pygame
-    
+    # Start pygame    
     p.init()
-
     p.display.set_caption("Onitama")
     p.display.set_icon(IMAGES_icon )
     
-    '''
-    Define font for the end game message here
-    '''
-    # available_fonts = p.font.get_fonts()
-    # random_font = available_fonts[random.randint(0, len(available_fonts)-1)]
     
+    # Define font for the end game message here    
     myfont = p.font.SysFont('consolas', FONT_SIZE)
     screen = p.display.set_mode((WIDTH, HEIGHT))  
     
@@ -282,11 +277,8 @@ def main(**kwargs):
     board_camera = p.Rect(0,0,WIDTH_BOARD,HEIGHT)
     cards_camera = p.Rect(WIDTH_BOARD,0,WIDTH_CARDS,HEIGHT)
     
-    # subsurfaces of canvas
-    # Note that subx needs refreshing when px_camera changes.
-    '''
-    CARDS
-    '''
+    
+    # CARDS    
     screen_cards = screen.subsurface(cards_camera)
     screen_cards_ind_frame, screen_cards_ind_inner = {}, {}
     delta_h = CARD_HEIGHT + 2*PAD
@@ -317,9 +309,8 @@ def main(**kwargs):
       
       height += delta_h 
       
-    '''
-    BOARD
-    '''
+    
+    # BOARD    
     screen_board = screen.subsurface(board_camera)
     
     screen_board.fill(p.Color("white"))
@@ -332,21 +323,17 @@ def main(**kwargs):
         color = colors[(j+i)%2]
         board_cells[i][j] = screen_board.subsurface(p.Rect(j*SQ_SIZE, i*SQ_SIZE, SQ_SIZE, SQ_SIZE))
         board_cells[i][j].fill(color)
+  
     
-        
-
-    clock = p.time.Clock()
     
-   
-    '''
-    Start game
-    '''
+    # Start game    
     gs = GAME.Board()
+    clock = p.time.Clock()
     first_piece_selected = None
     card_selected = None
     
     running = True    
-    block_game = False
+    block_game = False    
     
     score = {'human':0, 'ai':0}
     drawGameState(screen_board, screen_cards, screen_cards_ind_frame, screen_cards_ind_inner, gs, board_cells)
@@ -374,14 +361,13 @@ def main(**kwargs):
             
             for e in p.event.get():
               if e.type == p.QUIT:                    
-                  running = False
-                  # print("Exiting")
+                  running = False                  
                   p.quit()
                   sys.exit()
               elif e.type == p.MOUSEBUTTONDOWN:
                   # Detect if it was on a shrine
-                  location = p.mouse.get_pos() ##(x,y) location of mouse
-                  # print(location)
+                  location = p.mouse.get_pos() # (x,y) location of mouse
+                  if console_debug: print(location)
                   col = location[0]//SQ_SIZE
                   row = location[1]//SQ_SIZE
                   if row == 0 and col ==2:
@@ -390,6 +376,7 @@ def main(**kwargs):
                   if row == 4 and col == 2:
                     human = GAME.White
                     block_game = False
+                  
                   # Player clicked on a shrine, must reset game to start over
                   if block_game==False:
                     gs = GAME.Board()                  
@@ -407,13 +394,13 @@ def main(**kwargs):
                 for e in p.event.get():
                     if e.type == p.QUIT:                    
                         running = False
-                        # print("Exiting")
+                        if console_debug:  print("Exiting")
                         p.quit()
                         sys.exit()
                                       
                     elif e.type == p.MOUSEBUTTONDOWN:
-                        location = p.mouse.get_pos() ##(x,y) location of mouse
-                        # print(location)
+                        location = p.mouse.get_pos() # (x,y) location of mouse
+                        if console_debug:  print(location)
                         col = location[0]//SQ_SIZE
                         row = location[1]//SQ_SIZE
                         
@@ -423,7 +410,7 @@ def main(**kwargs):
                           '''
                           # Select the card                          
                           card_selected = find_card(location[1])
-                          # print("Card selected: ", card_selected)
+                          if console_debug:  print("Card selected: ", card_selected)
                           
                           # Check if it belongs to player
                           if (gs.turn==GAME.White and not card_selected in [3,4]) or (gs.turn==GAME.Black and not card_selected in [0,1]):
@@ -436,7 +423,7 @@ def main(**kwargs):
                           back.fill(color_selected)
                           
                           # if first cell is selected, highlight the possible moves
-                          # print("Checking spots to highlight")
+                          if console_debug:  print("Checking spots to highlight")
                           highlight_moves(gs, board_cells, first_piece_selected, card_selected)
                               
                           
@@ -445,7 +432,7 @@ def main(**kwargs):
                           '''
                           Clicked on the board
                           '''
-                          # print("Board: cell selected: ({},{})".format(row, col))
+                          if console_debug:  print("Board: cell selected: ({},{})".format(row, col))
                           
                           if is_on_own_piece(gs, row, col):
                             # Only works for selecting first piece to move                            
@@ -456,7 +443,7 @@ def main(**kwargs):
                                 first_piece_selected=None
                                 
                               # If piece is already selected, must start over
-                              # print("Must move to an empty space")                                                            
+                              if console_debug:  print("Must move to an empty space")                                                            
                             else:                              
                               restart_board_colors(board_cells)
                               board_cells[row][col].fill(color_selected)
@@ -474,7 +461,7 @@ def main(**kwargs):
                             
                             
                             if card_selected is None:
-                              # print("Must select card first")                              
+                              if console_debug:  print("Must select card first")                              
                               continue
                             else:
                               # Check if move is valid                              
@@ -485,12 +472,13 @@ def main(**kwargs):
                                                translate_card_on_board(gs, card_selected))
                               if move.valid(gs):
                                 # Everything is good, we can make the move
-                                # print('Performing move')
-                                # print(move)
-                                # print(gs)
+                                if console_debug:
+                                  print('Performing move')
+                                  print(move)
+                                  print(gs)
                                 gs.play(move)
                                 if gs.terminal():
-                                  # print("END")                                  
+                                  if console_debug:  print("END")                                  
                                   block_game = True
                                   # Update score: human wins
                                   score['human']+=1
@@ -500,13 +488,13 @@ def main(**kwargs):
                                 change_to_color(list(screen_cards_ind_frame.values()))
                                 card_selected = None
                               else:
-                                # print("Move is not valid")
+                                if console_debug:  print("Move is not valid")
                                 pass
                                                             
                                        
             else:
-                # Bot plays
-                label = myfont.render('{: ^50}'.format(enemy_name+' is thinking...'), 1, color_text, color_text_back)
+                # Bot plays                
+                label = myfont.render('{: ^50}'.format('{} is thinking...'.format(enemy_name)), 1, color_text, color_text_back)
                 text_w = label.get_width()
                 
                 text_h = label.get_height()
@@ -514,13 +502,13 @@ def main(**kwargs):
                 screen.blit(label, (pos, HEIGHT//2))
                 p.display.update()
                 T = transposition_table.T_Table() 
-                # For the moment all bots recieve Table, board, n
+                # TODO: For the moment all bots recieve Table, board, n
                 move = enemy(T, gs, nb_coups)
                 gs.play (move)
                 board_cells[move.x1][move.y1].fill(color_selected)
                 board_cells[move.x2][move.y2].fill(color_highlight)
                 if gs.terminal():
-                  # print("END")
+                  if console_debug:  print("END")
                   block_game=True
                   # Update score: ai wins
                   score['ai']+=1
@@ -533,7 +521,7 @@ def main(**kwargs):
     except Exception as e:
         print(e)        
         running = False
-        print("Exiting")
+        print("Exiting due to an Exception")
         p.quit()
         sys.exit()
         
@@ -550,18 +538,18 @@ if __name__ == "__main__":
     """
     GUI human vs bot
     """
-    if True:
-      '''
-      Define bots dictionary here
-      '''
-      bots = PLAYERS.bots
-      args = parseInputs()
-      enemy = bots[args.enemy]
-      enemy_name = args.enemy
-      n = int(args.n)
-      play_as = GAME.White if args.play_as == "red" else GAME.Black
-      # print(args)
-      main(nb_coups = n, enemy = enemy, play_as = play_as, enemy_name = enemy_name)
+
+    # Define bots dictionary here    
+    bots = PLAYERS.bots
+    
+    # Read args
+    args = parseInputs()
+    enemy = bots[args.enemy]
+    enemy_name = args.enemy
+    n = int(args.n)
+    play_as = GAME.White if args.play_as.lower() == "red" else GAME.Black
+    console_debug = True if args.console_debug.lower() == "true" else False
+    main(nb_coups = n, enemy = enemy, play_as = play_as, enemy_name = enemy_name, console_debug=console_debug)
   
   
     
