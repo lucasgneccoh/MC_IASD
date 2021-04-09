@@ -1,0 +1,11 @@
+{"tournaments":{
+    "Rapid SHUSS vs UCT": [
+    {"bot": "SHUSS","n": 50,"c": 64},
+    {"bot": "UCT","n": 50}
+    ],
+    "Test Flat MC": [
+    {"bot": "Flat MC","n": 50},
+    {"bot": "Random"}
+    ]
+   }
+}
