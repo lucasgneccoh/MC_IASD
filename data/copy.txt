@@ -1,0 +1,2 @@
+scp -P 5022 lgnecco@ssh.lamsade.dauphine.fr:~/M2/MCTS/MC_IASD/data/bots.csv C:/Users/lucas/OneDrive/Documentos/GitHub/MC_IASD/data/bots_server.csv
+scp -P 5022 lgnecco@ssh.lamsade.dauphine.fr:~/M2/MCTS/MC_IASD/data/matches_history.csv C:/Users/lucas/OneDrive/Documentos/GitHub/MC_IASD/data/matches_history_server.csv

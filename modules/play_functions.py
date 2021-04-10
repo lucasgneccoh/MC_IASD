@@ -9,7 +9,7 @@ import copy
 import sys
 
 ##Constantes
-MAX_RECURSION_DELTA = 100 
+MAX_RECURSION_DELTA = 850
 
 """
 Shuss

@@ -36,6 +36,7 @@ def parseInputs():
   parser.add_argument("--rounds", help="Number of rounds each pair of bots will play (two games per round, home and away)", default=2)
   bot_options = ', '.join(bot_dict.keys())
   parser.add_argument("--bots", help=f"JSON file containing the tournaments and the bots involved. The options for the bots are {bot_options}. See \bot_fights\tournament_example.json for an example.", default="../bot_fights/tournament_example.json")
+  parser.add_argument("--max_recur", help="Max recursion allowed for the recursive algorithms", default=200)
   args = parser.parse_args()
   return args
 

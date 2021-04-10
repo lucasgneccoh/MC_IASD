@@ -1,8 +1,4 @@
-{"tournaments":{
-    "T1": [
-    {"bot": "SHUSS","n": 1000,"c": 64},
-    {"bot": "SHUSS","n": 10000,"c": 64}
-    ],
+{"tournaments":{    
     "T2": [
     {"bot": "SHUSS","n": 1000,"c": 64},
     {"bot": "GRAVE","n": 10000}
