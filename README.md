@@ -1,7 +1,7 @@
-# MC_IASD
-Final project - IASD - Monte Carlo
+# Onitama, the game
+Final project - IASD - Monte Carlo Tree Search
 
-We implement the game [Onitama](https://en.wikipedia.org/wiki/Onitama) and test different algorithms to play the game. 
+We implement the game [Onitama](https://en.wikipedia.org/wiki/Onitama) and test different MCTS algorithms to play the game. 
 
 The script `onitama.py` contains the definition of the game with its rules and evolution. The class `Board` represents a game, and the class `Move` represents a move.
 
@@ -17,7 +17,7 @@ Run `python GUI_oni.py --help` for all the details.
 ```
 
 # Compare the different algorithms
-The script `modules\tournament.py` is designed to run a tournament between the bots. To run a tournament, you must create a JSON file containing the details for the tournament including its name, the bots included and their paramteres. See the `bot_fights` folder for an example.
+The script `modules\tournament.py` is designed to run a tournament between the bots. To run a tournament, you must create a JSON file containing the details for the tournament including its name, the bots included and their paramteres. See the [`bot_fights`](https://github.com/lucasgneccoh/Onitama/tree/main/bot_fights) folder for an [example](https://github.com/lucasgneccoh/Onitama/blob/main/bot_fights/tournament_example.json).
 The results are saved in the `data` folder by default, but you can pass the desired path as argument.
 Run `python tournament.py --help` for all the details.
 
